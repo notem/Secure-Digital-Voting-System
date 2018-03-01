@@ -7,7 +7,7 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
-  <head>
+<head>
     <title>Secure Voting System</title>
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -24,27 +24,28 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
-  </head>
-  <body>
+</head>
+<body>
 
-  <nav class="navbar navbar-inverse">
+<nav class="navbar navbar-inverse">
     <div class="container-fluid">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="index.jsp">WebSiteName</a>
-      </div>
-      <ul class="nav navbar-nav">
-        <li class="active"><a href="index.jsp">Home</a></li>
-        <li><a href="vDashboard.jsp">Voter Dashboard</a></li>
-        <li><a href="createElection.jsp">Create Election</a></li>
-      </ul>
+        <div class="navbar-header">
+            <a class="navbar-brand" href="index.jsp">WebSiteName</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li><a href="index.jsp">Home</a></li>
+            <li class="active"><a href="vDashboard.jsp">Voter Dashboard</a></li>
+            <li><a href="createElection.jsp">Create Election</a></li>
+        </ul>
     </div>
-  </nav>
+</nav>
 
-  <div class="container">
-    <h1> Welcome to the Secure Voting System!</h1>
-    <h3> The Secure Voting System is here to solve all of your insecure voting problems. If you would like to create an election, view an election, or vote in an election,
-    this is the place for you.</h3>
-  </div>
+<div class="container">
+    <h1> Your Voter Dashboard</h1>
+    <h3> As a voter, it is important for you to have as much information about the
+    elections you are participating as possible. This is the wealth of knowledge that is
+    available as a voter in the Secure Voting System.</h3>
+</div>
 
-  </body>
+</body>
 </html>
