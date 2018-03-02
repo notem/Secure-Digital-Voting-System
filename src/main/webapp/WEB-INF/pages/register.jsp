@@ -13,7 +13,28 @@
 
 <h3>Register</h3>
 
-This is demo Simple web application using jsp&amp;servlet
+<%-- form registers arbitrary users names and keys --%>
+<form method="POST" action="${pageContext.request.contextPath}/register">
+    <table border="0">
+        <tr>
+            <td>First Name</td>
+            <td><input type="text" name="firstName" /> </td>
+        </tr>
+        <tr>
+            <td>Last Name</td>
+            <td><input type="text" name="lastName" /> </td>
+        </tr>
+        <tr>
+            <td>Public Key</td>
+            <td><input type="text" name="publicKey" /> </td>
+        </tr>
+        <tr>
+            <td colspan ="2">
+                <input type="submit" value= "Submit" />
+            </td>
+        </tr>
+    </table>
+</form>
 
 <jsp:include page="_footer.jsp"></jsp:include>
 

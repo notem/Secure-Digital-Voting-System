@@ -6,6 +6,5 @@
     </div>
 
     <div style="float: right; padding: 10px; text-align: right;">
-        HEADER
     </div>
 </div>
