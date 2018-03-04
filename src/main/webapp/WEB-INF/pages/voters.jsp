@@ -13,7 +13,6 @@
 <jsp:include page="_menu.jsp"></jsp:include>
 
 <h3>Registered Voters</h3>
-
 <%-- show list of registered voters --%>
 <ul>
     <c:forEach var="voter" items="${voters}">
@@ -22,7 +21,6 @@
         </li>
     </c:forEach>
 </ul>
-
 
 <jsp:include page="_footer.jsp"></jsp:include>
 

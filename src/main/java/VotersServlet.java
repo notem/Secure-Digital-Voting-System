@@ -21,8 +21,10 @@ public class VotersServlet extends HttpServlet
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
-        List<String> voters = DatabaseUtils.getVoters(); // voter names from database
-        request.setAttribute("voters", voters);       // add list to request
+        List<String> voters = DatabaseUtils.getVoters();   // voter names from database
+        List<String> keys = DatabaseUtils.getPublicKeys(); // voter names from database
+        request.setAttribute("voters", voters); // add list to request
+        request.setAttribute("keys", keys);     // add list to request
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/voters.jsp");
         dispatcher.forward(request, response);
     }

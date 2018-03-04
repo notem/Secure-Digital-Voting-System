@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,11 +51,12 @@ public class DatabaseUtils
         String rst; PreparedStatement pst;
         try
         {   // create voter table if not exists
-            rst = "CREATE TABLE IF NOT EXISTS voters " +
-                    "(key varchar (100) PRIMARY KEY, " +
-                        "fname varchar (40) NOT NULL, " +
-                        "lname varchar (40), " +
-                        "UNIQUE (lname,fname));";
+            rst = "CREATE TABLE IF NOT EXISTS voters (" +
+                    "fname varchar (40) NOT NULL, " +
+                    "lname varchar (40) NOT NULL, " +
+                    "key varchar (342) PRIMARY KEY, " +
+                    "UNIQUE (lname,fname)" +
+                  ");";
             connection.prepareStatement(rst).executeUpdate();
 
             // insert new voter record into the table
@@ -66,14 +68,15 @@ public class DatabaseUtils
             return 1 == pst.executeUpdate(); // return true if one entry was update
         }
         catch (SQLException e)
-        {   // bleh
+        {
+            e.printStackTrace();
             return false;
         }
     }
 
     /**
      * retrieves list of currently registered voters
-     * @return list of voter names
+     * @return sorted list of voter names
      */
     public static List<String> getVoters()
     {
@@ -88,6 +91,33 @@ public class DatabaseUtils
                 String name = res.getString("fname") + " " + res.getString("lname");
                 list.add(name);
             }
+            Collections.sort(list);
+            return list;
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+    }
+
+    /**
+     * retrieves the list of all registered public keys
+     * @return sorted list of registered 2048-bit RSA keys (base64url encoded)
+     */
+    public static List<String> getPublicKeys()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        try
+        {
+            st  = "SELECT * FROM voters;";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next())
+            {
+                list.add(res.getString("key"));
+            }
+            Collections.sort(list); // sort list so as to hide ownership
             return list;
         }
         catch (SQLException e)
