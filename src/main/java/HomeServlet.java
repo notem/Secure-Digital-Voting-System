@@ -5,12 +5,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
-@WebServlet(urlPatterns = { "/voters"})
-public class VotersServlet extends HttpServlet
+@WebServlet(urlPatterns = { "/"})
+public class HomeServlet extends HttpServlet
 {
-    public VotersServlet()
+    public HomeServlet()
     {
         super();
     }
@@ -19,16 +18,10 @@ public class VotersServlet extends HttpServlet
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
-        request.setAttribute("votersActive", "true");
-
-        /* grab voter information and set attribs*/
-        List<String> voters = DatabaseUtils.getVoters();   // voter names from database
-        List<String> keys = DatabaseUtils.getPublicKeys(); // voter names from database
-        request.setAttribute("voters", voters); // add list to request
-        request.setAttribute("keys", keys);     // add list to request
+        request.setAttribute("homeActive", "");
 
         /* forward the request onto the jsp compiler */
-        RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/voters.jsp");
+        RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/home.jsp");
         dispatcher.forward(request, response);
     }
 

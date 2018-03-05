@@ -34,9 +34,6 @@ public class DatabaseUtils
             System.out.println("Connection Failed!");
             e.printStackTrace();
         }
-
-        if (connection == null)
-            System.exit(-1);
     }
 
     /**
@@ -48,6 +45,7 @@ public class DatabaseUtils
      */
     public static Boolean registerVoter(String pubKey, String fname, String lname)
     {
+        if (connection == null) return false;
         String rst; PreparedStatement pst;
         try
         {   // create voter table if not exists
@@ -82,6 +80,7 @@ public class DatabaseUtils
     {
         String st; ResultSet res;
         List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
         try
         {
             st  = "SELECT * FROM voters;";
@@ -109,6 +108,7 @@ public class DatabaseUtils
     {
         String st; ResultSet res;
         List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
         try
         {
             st  = "SELECT * FROM voters;";

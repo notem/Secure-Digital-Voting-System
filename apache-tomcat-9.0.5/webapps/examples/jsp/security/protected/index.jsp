@@ -17,7 +17,7 @@
 <%
   if (request.getParameter("logoff") != null) {
     session.invalidate();
-    response.sendRedirect("jsp/index.jsp");
+    response.sendRedirect("jsp/home.jsp");
     return;
   }
 %>
@@ -66,7 +66,7 @@ in session <b><%= session.getId() %></b><br><br>
 
 To check whether your user name has been granted a particular role,
 enter it here:
-<form method="GET" action='<%= response.encodeURL("jsp/index.jsp") %>'>
+<form method="GET" action='<%= response.encodeURL("jsp/home.jsp") %>'>
 <input type="text" name="role" value="<%= util.HTMLFilter.filter(role) %>">
 <input type="submit" >
 </form>
@@ -74,7 +74,7 @@ enter it here:
 
 If you have configured this application for form-based authentication, you can
 log off by clicking
-<a href='<%= response.encodeURL("jsp/index.jsp") %>'>here</a>.
+<a href='<%= response.encodeURL("jsp/home.jsp") %>'>here</a>.
 This should cause you to be returned to the login page after the redirect
 that is performed.
 

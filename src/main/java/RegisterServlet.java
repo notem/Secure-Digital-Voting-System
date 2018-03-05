@@ -10,8 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(urlPatterns = { "/register"})
 public class RegisterServlet extends HttpServlet
 {
-    private static final long serialVersionUID = 1L; // I do not know what this is for!
-
     public RegisterServlet()
     {
         super();
@@ -21,6 +19,9 @@ public class RegisterServlet extends HttpServlet
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+        request.setAttribute("registerActive", "");
+
+        /* forward the request onto the jsp compiler */
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/register.jsp");
         dispatcher.forward(request, response);
     }
@@ -29,14 +30,18 @@ public class RegisterServlet extends HttpServlet
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+        /* grab registration information */
         String fname = request.getParameter("firstName");
         String lname = request.getParameter("lastName");
         String pub  = request.getParameter("publicKey");
+
+        /* register the voter's information */
         if (DatabaseUtils.registerVoter(pub, fname, lname))
-        {   // TODO do something if successful
-        } else
-        {   // TODO do something if unsuccessful
-        }
+            request.setAttribute("success", "true");
+        else // TODO improve error details
+            request.setAttribute("success", "false");
+
+        /* refresh the page */
         doGet(request, response);
     }
 }
