@@ -12,6 +12,9 @@
             <li <% if(request.getAttribute("dashboardActive") != null) { %> class="active" <% } %>>
                 <a href="${pageContext.request.contextPath}/dashboard">Voter Dashboard</a>
             </li>
+            <li <% if(request.getAttribute("electionManagerActive") != null) { %> class="active" <% } %>>
+                <a href="${pageContext.request.contextPath}/electionmanager">Election Manager Dashboard</a>
+            </li>
             <li <% if(request.getAttribute("createElectionActive") != null) { %> class="active" <% } %>>
                 <a href="${pageContext.request.contextPath}/create-election">Create Election</a>
             </li>
