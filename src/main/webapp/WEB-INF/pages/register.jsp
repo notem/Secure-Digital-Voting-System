@@ -56,10 +56,10 @@
 
 <div class="container">
     <%-- insert registration success message --%>
-    <% if(request.getAttribute("success") != null) {
-        if(request.getAttribute("success")=="true") {%>
+    <% if(request.getAttribute("error") != null) {
+        if(request.getAttribute("error")=="") {%>
             <h4 class="text-success">Success: Your information has been successfully registered.</h4>
-        <% } else { %>
+        <% } else { //TODO learn how to insert the error variable into the page's error message %>
             <h4 class="text-danger">Failure: There was an error registering your information!</h4>
         <% }
     } %>

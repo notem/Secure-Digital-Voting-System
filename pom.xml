@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mycompany.app</groupId>
-    <artifactId>my-webapp</artifactId>
+    <artifactId>secure-voting-webapp</artifactId>
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
 
@@ -31,6 +31,6 @@
     </dependencies>
 
     <build>
-        <finalName>my-webapp</finalName>
+        <finalName>ROOT</finalName>
     </build>
 </project>

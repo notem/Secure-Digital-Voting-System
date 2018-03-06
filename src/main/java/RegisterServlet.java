@@ -33,13 +33,30 @@ public class RegisterServlet extends HttpServlet
         /* grab registration information */
         String fname = request.getParameter("firstName");
         String lname = request.getParameter("lastName");
-        String pub  = request.getParameter("publicKey");
+        String pub   = request.getParameter("publicKey");
 
-        /* register the voter's information */
-        if (DatabaseUtils.registerVoter(pub, fname, lname))
-            request.setAttribute("success", "true");
-        else // TODO improve error details
-            request.setAttribute("success", "false");
+        /* do some (very basic) input validation */
+        boolean err = false;
+        if (fname.isEmpty() || lname.isEmpty() || fname.length() > 40 || lname.length() > 40)
+        {
+            request.setAttribute("error", "The registration name is invalid!");
+            err = true;
+        }
+        if (pub.isEmpty())
+        {
+            request.setAttribute("error", "The registered public key cannot be empty!");
+            err = true;
+        }
+
+        if (!err)
+        {
+            /* register the voter's information */
+            err = !DatabaseUtils.registerVoter(pub, fname, lname);
+            if (err)
+                request.setAttribute("error", "The provided information is invalid!");
+            else
+                request.setAttribute("error", "");
+        }
 
         /* refresh the page */
         doGet(request, response);

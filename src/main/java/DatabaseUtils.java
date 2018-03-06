@@ -60,9 +60,9 @@ public class DatabaseUtils
             // insert new voter record into the table
             rst = "INSERT INTO voters VALUES(?, ?, ?);";
             pst = connection.prepareStatement(rst);
-            pst.setString(1, pubKey);
-            pst.setString(2, fname);
-            pst.setString(3, lname);
+            pst.setString(1, fname);
+            pst.setString(2, lname);
+            pst.setString(3, pubKey);
             return 1 == pst.executeUpdate(); // return true if one entry was update
         }
         catch (SQLException e)

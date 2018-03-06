@@ -7,11 +7,11 @@
     * dbUser -> user account
     * dbPassword -> user's password
     * dbURI -> something similar to "jdbc:postgresql://localhost:5432/mydb"
+NOTE: the web app should run without crashing even if the database is not configured
 
 ### Build Instructions
 1) Install Maven <https://maven.apache.org/>
 1) Use Maven to compile to a .war package (ex. "mvn war:war" or "mvn package")
-2) Move "my-webapp.jar" to apache-tomcat-9.0.5/webapps/
+2) Move "ROOT.jar" to apache-tomcat-9.0.5/webapps/
 3) Run "apache-tomcat-9.0.5/bin/catalina.sh start"
-
-Alternatively, modify the tomcat web server configuration preset for one-button building and running
+4) The webapp should be accessible via "localhost:8080/"
