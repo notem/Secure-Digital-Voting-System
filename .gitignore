@@ -23,3 +23,9 @@
 hs_err_pid*
 /.idea/
 /VotingSystem.iml
+/out/
+/target/
+/apache-tomcat-9.0.5/logs/
+/apache-tomcat-9.0.5/webapps/
+/apache-tomcat-9.0.5/temp/
+/apache-tomcat-9.0.5/work/
