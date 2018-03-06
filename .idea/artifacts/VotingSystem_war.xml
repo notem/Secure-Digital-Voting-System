@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="war" build-on-make="true" name="VotingSystem:war">
-    <output-path>$PROJECT_DIR$/out</output-path>
-    <root id="archive" name="VotingSystem_war.war">
-      <element id="artifact" artifact-name="VotingSystem:war exploded" />
-    </root>
-  </artifact>
-</component>
