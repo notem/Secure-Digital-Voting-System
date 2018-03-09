@@ -13,6 +13,43 @@
     <h3> As a voter, it is important for you to have as much information about the
     elections you are participating as possible. This is the wealth of knowledge that is
     available as a voter in the Secure Voting System.</h3>
+
+    <h4>Current Elections</h4>
+    <table>
+        <tr>
+            <td>Election Name</td>
+            <td>End Date</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+
+    <h4>Upcoming Elections</h4>
+    <table>
+        <tr>
+            <td>Election Name</td>
+            <td>Start Date</td>
+            <td>End Date</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+    <h4>Past Elections</h4>
+    <table>
+        <tr>
+            <td>Election Name</td>
+            <td>End Date</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
 </div>
 
 </body>
