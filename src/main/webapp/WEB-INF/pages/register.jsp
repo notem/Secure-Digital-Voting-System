@@ -7,51 +7,10 @@
     <title>Voter Registration Page</title>
     <jsp:include page="_styles.jsp"></jsp:include>
 </head>
-<script language="JavaScript">
-    <!--
-    function generateKeys()
-    {
-        /* WebCryptoAPI key generation parameters */
-        var algorithmKeyGen = {
-            name: "RSASSA-PKCS1-v1_5",
-            // RsaHashedKeyGenParams
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),  // e=65537
-            hash: {
-                name: "SHA-256"
-            }
-        };
-        var extractable = true;
-        var usage = ["sign", "verify"];
 
-        /* generate public-private RSA keypair */
-        window.crypto.subtle.generateKey(algorithmKeyGen, extractable, usage)
-            .then(function(keys){
-
-                /* export the public key json web key*/
-                window.crypto.subtle.exportKey("jwk", keys.publicKey).then(function(data){
-                    document.getElementById('modulusRegister').value = data.n; // modulus
-                    document.getElementById('publicKeyExport').innerHTML = JSON.stringify(data);
-                }).catch(function(err){
-                    document.getElementById('publicKeyExport').innerHTML = "Error exporting public key to JsonWebKey:"+err;
-                });
-
-                /* export the private key as json web key*/
-                window.crypto.subtle.exportKey("jwk", keys.privateKey).then(function(data){
-                    document.getElementById('privateKeyExport').innerHTML = JSON.stringify(data);
-                }).catch(function(err){
-                    document.getElementById('privateKeyExport').innerHTML = "Error exporting private key to JsonWebKey: "+err;
-                });
-            }).catch(function(err){
-                document.getElementById('publicKeyExport').innerHTML = "Error generating RSA keys: "+err;
-                document.getElementById('privateKeyExport').innerHTML = "Error generating RSA keys: "+err;
-            });
-    }
-    //-->
-</script>
+<jsp:include page="_keyGenerationScript.jsp"></jsp:include>
 
 <body>
-
 <jsp:include page="_menu.jsp"></jsp:include>
 
 <div class="container">
@@ -59,8 +18,8 @@
     <% if(request.getAttribute("error") != null) {
         if(request.getAttribute("error")=="") {%>
             <h4 class="text-success">Success: Your information has been successfully registered.</h4>
-        <% } else { //TODO learn how to insert the error variable into the page's error message %>
-            <h4 class="text-danger">Failure: There was an error registering your information!</h4>
+        <% } else { %>
+            <h4 class="text-danger">Failure: ${error}</h4>
         <% }
     } %>
 
@@ -70,15 +29,19 @@
         <table border="0">
             <tr>
                 <td>First Name</td>
-                <td><input type="text" name="firstName" title="First Name"/> </td>
+                <td><input type="text" name="firstName" id="fname" title="First Name"/> </td>
             </tr>
             <tr>
                 <td>Last Name</td>
-                <td><input type="text" name="lastName"  title="Last Name"/> </td>
+                <td><input type="text" name="lastName" id="lname" title="Last Name"/> </td>
             </tr>
             <tr>
                 <td>Public Key</td>
                 <td><input type="text" id="modulusRegister" name="publicKey" title="RSA Public Key"/> </td>
+            </tr>
+            <tr>
+                <td>Signature</td>
+                <td><input type="text" id="signature" name="signature" title="The RSA public key signature is used by the server to verify that you own the public key."/> </td>
             </tr>
             <tr>
                 <td colspan ="2">
@@ -93,7 +56,7 @@
 
     <%-- generates and displays new RSA key pair on the client --%>
     <input onclick="generateKeys()" type="button" value= "Generate New RSA Keys" />
-    <table border="0">
+    <table border="0" style="table-layout:fixed;width:100%">
         <tr>
             <td><h4>Public Key</h4></td>
         </tr>
@@ -105,7 +68,7 @@
         </tr>
         <tr>
             <%-- generated jwk public key goes here --%>
-            <td><code id="publicKeyExport"></code></td>
+            <td><code id="publicKeyExport" style="overflow-wrap:break-word;"></code></td>
         </tr>
         <tr>
             <td><h4>Private Key</h4></td>
@@ -116,7 +79,7 @@
         </tr>
         <tr>
             <%-- generated jwk private key goes here --%>
-            <td><code id="privateKeyExport"></code></td>
+            <td><code id="privateKeyExport" style="overflow-wrap:break-word;"></code></td>
         </tr>
     </table>
 </div>

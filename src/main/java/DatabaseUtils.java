@@ -52,7 +52,7 @@ public class DatabaseUtils
             rst = "CREATE TABLE IF NOT EXISTS voters (" +
                     "fname varchar (40) NOT NULL, " +
                     "lname varchar (40) NOT NULL, " +
-                    "key varchar (342) PRIMARY KEY, " +
+                    "key varchar (344) PRIMARY KEY, " +
                     "UNIQUE (lname,fname)" +
                   ");";
             connection.prepareStatement(rst).executeUpdate();

@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -34,6 +36,7 @@ public class RegisterServlet extends HttpServlet
         String fname = request.getParameter("firstName");
         String lname = request.getParameter("lastName");
         String pub   = request.getParameter("publicKey");
+        String sig   = request.getParameter("signature");
 
         /* do some (very basic) input validation */
         boolean err = false;
@@ -42,15 +45,23 @@ public class RegisterServlet extends HttpServlet
             request.setAttribute("error", "The registration name is invalid!");
             err = true;
         }
-        if (pub.isEmpty())
+        if (pub.isEmpty() || sig.isEmpty())
         {
-            request.setAttribute("error", "The registered public key cannot be empty!");
+            request.setAttribute("error", "The registered public key and signature cannot be empty!");
+            err = true;
+        }
+
+        // verify public key signature
+        PublicKey pubKey = CryptoUtils.createPublicKey(pub);
+        if (!err && !CryptoUtils.verifySignature(pub, sig, pubKey))
+        {
+            request.setAttribute("error", "Your public key signature was invalid.");
             err = true;
         }
 
         if (!err)
         {
-            /* register the voter's information */
+            // register the voter's information
             err = !DatabaseUtils.registerVoter(pub, fname, lname);
             if (err)
                 request.setAttribute("error", "The provided information is invalid!");
