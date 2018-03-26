@@ -8,7 +8,7 @@
     <jsp:include page="_styles.jsp"></jsp:include>
 </head>
 
-<jsp:include page="_keyGenerationScript.jsp"></jsp:include>
+<jsp:include page="_scriptRegister.jsp"></jsp:include>
 
 <body>
 <jsp:include page="_menu.jsp"></jsp:include>

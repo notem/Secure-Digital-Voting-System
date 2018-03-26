@@ -13,6 +13,8 @@
 <jsp:include page="_menu.jsp"></jsp:include>
 
 <div class="container">
+    <%-- TODO: don't show voters & keys until election has completed --%>
+
     <h3>Registered Voters</h3>
     <%-- show list of registered voters --%>
     <ul>
