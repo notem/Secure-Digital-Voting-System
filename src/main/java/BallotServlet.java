@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
@@ -51,95 +52,39 @@ public class BallotServlet extends HttpServlet
             err = true;
         }
 
-        /* split the ballot into encrypted bytes and signature bytes*/
-        byte[] encrypted = new byte[512], signature = new byte[32];
+        /* parse the encrypted data into a decrypted & verified ballot object */
+        PrivateKey decryptionKey = keys.getPrivate(); // TODO: grab election's private key before decrypting the ballot
+        DecryptedBallot ballot = null;
         if (!err)
         {
-            try
+            try /* DecryptedBallot constructor will through illegal argument errors if ballot is invalid */
             {
-                byte[] out = Base64.getDecoder().decode(data);
-                encrypted = Arrays.copyOfRange(out, 0, 512);
-                signature = Arrays.copyOfRange(out, 512, out.length);
+                ballot = new DecryptedBallot(data, decryptionKey);
+                System.out.println(ballot.toString());
             }
-            catch (Exception e)
+            catch (IllegalArgumentException e)
             {
-                request.setAttribute("error", "Ballot was not Base64 encoded!");
+                request.setAttribute("error", e.getMessage());
                 err = true;
             }
         }
 
-        /* retrieve the election's private key & decrypt the ballot */
-        String modulus = null;
-        long unixEpoch = 0;
-        byte[] contents;
+
+        /* verify that the ballot's modulus (key) is registered */
         if (!err)
         {
-            PrivateKey decryptionKey = keys.getPrivate(); // TODO: get election private key and decrypt
-            String decrypted = CryptoUtils.decryptData(Base64.getEncoder().encodeToString(encrypted), decryptionKey);
-            if (decrypted == null)
-            {
-                request.setAttribute("error", "Ballot was not properly encrypted!");
-                err = true;
-            }
-            else
-            {
-                byte[] raw = Base64.getDecoder().decode(data);
-                if (raw.length < 265)
-                {
-                    request.setAttribute("error", "Ballot was not properly encrypted!");
-                    err = true;
-                }
-                else
-                {   // voter's public key modulus
-                    modulus = Base64.getEncoder().encodeToString(Arrays.copyOfRange(raw, 0, 256));
-
-                    // unix epoch timestamp
-                    byte[] bytes = Arrays.copyOfRange(raw, 256, 264);
-                    System.out.print("\n");
-                    for (int i=7; i>=0; i--)
-                    {
-                        unixEpoch = (unixEpoch*256) + ((int)bytes[i] < 0 ? 256+(int)bytes[i] : (int)bytes[i]);
-                    }
-
-                    // voter's candidate choice
-                    contents = Arrays.copyOfRange(raw, 264, raw.length);
-                }
-            }
-        }
-
-        /* create the voter's public key & verify registration */
-        if (!err)
-        {
-            Boolean exists = false;
-            for (String key : DatabaseUtils.getPublicKeys())
-            {
-                if (key.equals(modulus))
-                {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists)
+            Boolean registered = DatabaseUtils.getPublicKeys().contains(ballot.modulus);
+            if (!registered)
             {
                 request.setAttribute("error", "Ballot contained an unknown voter key!");
                 err = true;
-            }
-            else
-            {
-                boolean verified = CryptoUtils.verifySignature(Base64.getEncoder().encodeToString(encrypted),
-                        Base64.getEncoder().encodeToString(signature), CryptoUtils.createPublicKey(modulus));
-                if (!verified)
-                {
-                    request.setAttribute("error", "Ballot signature was invalid!");
-                    err = true;
-                }
             }
         }
 
         /* verify that timestamp is reasonable */
         if (!err)
         {
-            long dif = abs(unixEpoch - Instant.now().getEpochSecond());
+            long dif = abs(ballot.timestamp - Instant.now().getEpochSecond());
             if (dif > 5*60)
             {
                 request.setAttribute("error", "Ballot timestamp is expired!");
@@ -150,16 +95,104 @@ public class BallotServlet extends HttpServlet
         /* verify candidate choice is valid */
         if (!err)
         {
-            // todo
+            // TODO: verify that the candidate's choice is an option?
         }
 
         /* send the encrypted ballot to be added to the block-chain */
         if (!err)
         {
-            // todo
+            // TODO: send encrypted ballot to the election's block chain
+            // DatabaseUtils.addToBlockChain(ballot);
         }
 
         /* refresh the page */
         doGet(request, response);
+    }
+
+    /**
+     */
+    public class DecryptedBallot
+    {
+        String encodedBallot; // full ballot (base64 encoded)
+        byte[] encrypted;     // 512 bytes (4096 bits)
+        byte[] signature;     // 256 bytes (2048 bits)
+        byte[] decrypted;     // variable length, 265-512 bytes
+
+        public String modulus;         // voter's public modulus (key)
+        public PublicKey verifyingKey; // key constructed from the recovered modulus
+        public long timestamp;         // unix epoch time (seconds)
+        public String candidate;       // candidate name
+
+        /**
+         * A simple Java object to abstract the process of decrypting and interpreting an encrypted ballot
+         * @param b64 the base64 encoded ballot
+         * @param decryptionKey the election's private key
+         * @throws IllegalArgumentException
+         */
+        public DecryptedBallot(String b64, PrivateKey decryptionKey) throws IllegalArgumentException
+        {
+            encodedBallot = b64;
+            byte[] out;
+            try /* decode the base64 encoded data */
+            {
+                out = Base64.getDecoder().decode(b64);
+            }
+            catch(Exception e)
+            {
+                throw new IllegalArgumentException("Ballot could not be decoded from base64!");
+            }
+
+            /* split the ballot into encrypted bytes and signature bytes*/
+            if (out.length != (512 + 256) /* length of (enc||sig) */)
+            {
+                throw new IllegalArgumentException("Ballot is not correct length!");
+            }
+            encrypted = Arrays.copyOfRange(out, 0, 512);
+            signature = Arrays.copyOfRange(out, 512, out.length);
+
+            /* retrieve the election's private key & decrypt the ballot */
+            String plaintext = CryptoUtils.decryptData(Base64.getEncoder().encodeToString(encrypted), decryptionKey);
+            if (plaintext == null)
+            {
+                throw new IllegalArgumentException("Ballot failed to decrypt!");
+            }
+            else
+            {
+                decrypted = Base64.getDecoder().decode(plaintext);
+                if (decrypted.length < 265)
+                {
+                    throw new IllegalArgumentException("Ballot candidate are not of a correct length!");
+                }
+                else
+                {   // voter's public key modulus (bytes 0-256)
+                    modulus = Base64.getEncoder().encodeToString(Arrays.copyOfRange(decrypted, 0, 256));
+
+                    // unix epoch timestamp (bytes 256-264)
+                    byte[] bytes = Arrays.copyOfRange(decrypted, 256, 264);
+                    for (int i=7; i>=0; i--)
+                    {
+                        timestamp = (timestamp*256) + ((int)bytes[i] < 0 ? 256+(int)bytes[i] : (int)bytes[i]);
+                    }
+
+                    // voter's candidate choice (bytes 264~512)
+                    candidate = new String(Arrays.copyOfRange(decrypted, 264, decrypted.length)); // everything else
+                }
+            }
+
+            /* verify the signature on the ballot */
+            verifyingKey = CryptoUtils.createPublicKey(modulus);
+            boolean verified = CryptoUtils.verifySignature(Base64.getEncoder().encodeToString(encrypted),
+                    Base64.getEncoder().encodeToString(signature), verifyingKey);
+            if (!verified)
+            {
+                throw new IllegalArgumentException("Ballot has an invalid signature!");
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            return "("+candidate+") @ [" + Instant.ofEpochSecond(timestamp).toString() + "] by " + modulus;
+        }
     }
 }

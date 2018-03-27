@@ -16,7 +16,7 @@
 <div class="container">
     <%-- insert registration success message --%>
     <% if(request.getAttribute("error") != null) {
-        if(request.getAttribute("error")=="") {%>
+        if(request.getAttribute("error").equals("")) {%>
     <h4 class="text-success">Success: Your ballot has been submitted.</h4>
     <% } else { %>
     <h4 class="text-danger">Failure: ${error}</h4>
