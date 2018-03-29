@@ -17,40 +17,49 @@
     <h4>Current Elections</h4>
     <table>
         <tr>
-            <td>Election Name</td>
-            <td>End Date</td>
+            <td>Election Name </td>
+            <td>End Date </td>
         </tr>
         <tr>
-            <td></td>
-            <td></td>
+            <td>
+                <c:forEach var="election" items="${elections}">
+                    <li>
+                        <h4><c:out value="${election}" /></h4>
+                    </li>
+                </c:forEach>
+            </td>
+            <td>
+                
+            </td>
         </tr>
     </table>
 
     <h4>Upcoming Elections</h4>
     <table>
         <tr>
-            <td>Election Name</td>
-            <td>Start Date</td>
-            <td>End Date</td>
+            <td>Election Name </td>
+            <td>Start Date </td>
+            <td>End Date </td>
         </tr>
         <tr>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td> </td>
+            <td> </td>
+            <td> </td>
         </tr>
     </table>
     <h4>Past Elections</h4>
     <table>
         <tr>
-            <td>Election Name</td>
-            <td>End Date</td>
+            <td>Election Name </td>
+            <td>End Date </td>
         </tr>
         <tr>
-            <td></td>
-            <td></td>
+            <td> </td>
+            <td> </td>
         </tr>
     </table>
 </div>
 
+<jsp:include page="_footer.jsp"></jsp:include>
 </body>
 </html>
