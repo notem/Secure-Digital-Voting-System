@@ -112,7 +112,6 @@ public class DatabaseUtils
     		res = connection.prepareStatement(st).executeQuery();
     		while(res.next()){
     			String election = res.getString("election_name") + " | " + res.getString("block_count") + 
-    					" | " + res.getString("start_date") + " | " + res.getString("duration") +
     					"\n" + res.getString("public_key");
     			list.add(election);
     		}
@@ -207,7 +206,7 @@ public class DatabaseUtils
      * @param electionKeys (optional) RSA-4096 key pair to utilize for the election 
      * @return True if the election is successfully created
      */
-    public static Boolean createElection(String electionName, String startDate, String duration, KeyPair electionKeys)
+    public static Boolean createElection(String electionName, KeyPair electionKeys)
     {
     	if(connection == null) return false;
     	String rst; PreparedStatement pst;
@@ -218,9 +217,7 @@ public class DatabaseUtils
             rst = "CREATE TABLE IF NOT EXISTS elections (" +
                     "public_key VARCHAR(8192) PRIMARY KEY," + // public key -> urlbase64 encoded
                     "block_count BIGINT NOT NULL," +     	// next block number
-                    "election_name VARCHAR(128)," +			// readable identifier, TODO unique?
-                    "start_date VARCHAR(10)," +				// YYYY-MM-DD
-                    "duration VARCHAR(20)" +				// "1 day", etc
+                    "election_name VARCHAR(128)" +			// readable identifier, TODO unique?
                     // other useful information to keep handy?
                     ");";
             connection.prepareStatement(rst).executeUpdate();
@@ -244,13 +241,11 @@ public class DatabaseUtils
             System.out.println("Election: " + electionName + "\nPK: " + pk);
             
             // store record for the Elections table
-            rst = "INSERT INTO elections VALUES (?, ?, ?, ?, ?)";
+            rst = "INSERT INTO elections VALUES (?, ?, ?)";
             pst = connection.prepareStatement(rst);
             pst.setString(1, pk);
             pst.setInt(2, 0);
             pst.setString(3, electionName);
-            pst.setString(4, startDate);	//TODO possibly convert to Date obj
-            pst.setString(5, duration);
             pst.executeUpdate();
             
             // store record for the PrivateKeys table
@@ -266,6 +261,39 @@ public class DatabaseUtils
     	{
     		e.printStackTrace();
     		return false;
+    	}
+    }
+    
+    /**
+     * Retrieves an election's private key from the private_keys table.
+     * TODO This method is a security concern. Monitor closely. 
+     * @param publicKey The public key corresponding to the election
+     * @return The private key for the election, base 64 encoded
+     */
+    public static String retrievePrivateKey(String publicKey)
+    {
+    	if (connection == null) return null;
+    	String rst; 
+    	PreparedStatement pst;
+    	ResultSet res;
+    	try{
+    		rst = "SELECT private_key FROM private_keys WHERE public_key=?";
+    		pst = connection.prepareStatement(rst);
+    		pst.setString(1, publicKey.substring(0,  32));
+    		res = pst.executeQuery();
+    		
+    		if(res.next())
+    		{
+    			return res.getString("private_key");
+    		}
+    		else
+    		{
+    			return null;
+    		}
+    	}
+    	catch(SQLException e){
+    		e.printStackTrace();
+    		return null;
     	}
     }
     

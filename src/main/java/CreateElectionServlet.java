@@ -33,19 +33,17 @@ public class CreateElectionServlet extends HttpServlet
     	request.setAttribute("err", "");
     	
     	String electionName = request.getParameter("electionName");
-    	String len = request.getParameter("length");
-        String startDate = "";
-    	String pubKey = request.getParameter("pubKey");
+    	String pubKey = request.getParameter("pubKey"); //TODO either add JS keygen or remove
 
-    	if(electionName == null || startDate == null || len == null)
+    	if(electionName == null)
     	{
     		err = true;
-    		request.setAttribute("err", "Missing value, cannot create election.");
+    		request.setAttribute("err", "Missing election name, cannot create election.");
     	}
 
     	if(!err)
     	{
-    		err = DatabaseUtils.createElection(electionName, startDate, len, null);
+    		err = DatabaseUtils.createElection(electionName, null);
     		if(err)
     		{
     			request.setAttribute("err", "Failed to create election.");

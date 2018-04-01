@@ -108,12 +108,20 @@ public class BallotServlet extends HttpServlet
         	boolean a,b,c;
         	
         	//TODO: Testing, remove when interfaces with legit elections are created
-        	a = DatabaseUtils.createElection("SubmitTest", String.format("%4.4f", Math.random()), "none", keys);
-        	b = DatabaseUtils.initializeElectionBlockchain(pk);
+        	if(DatabaseUtils.retrievePrivateKey(pk) == null)
+        	{
+        		a = DatabaseUtils.createElection("SubmitTest" + String.format("%4f", 1000 * Math.random()), keys);
+        		b = DatabaseUtils.initializeElectionBlockchain(pk);
+        	}
+        	else
+        	{
+        		a = true;
+        		b = true;
+        	}
         	
             c = DatabaseUtils.addToBlockchain(data, pk);
             
-            if (!a && !b && !c){
+            if (!c){
             	request.setAttribute("error", "Failed to add ballot to election blockchain!");
             	err = true;
             }
