@@ -181,4 +181,24 @@ public class CryptoUtils
             return null;
         }
     }
+    
+    /**
+     * Utility method to compute SHA-256 hashes 
+     * @param data Base-64 encoded string 
+     * @return	Base-64 encoded SHA-256 hash of the input
+     */
+    public static String hashData(String data)
+    {
+    	try
+    	{
+    		byte dbytes[] = Base64.getDecoder().decode(data);
+    		//...
+    		return Base64.getEncoder().encodeToString(dbytes);
+    	}
+    	catch(Exception e)
+    	{
+    		e.printStackTrace();
+    		return null;
+    	}
+    }
 }

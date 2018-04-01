@@ -1,7 +1,9 @@
+import java.security.KeyPair;
 import java.sql.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseUtils
 {
@@ -100,6 +102,29 @@ public class DatabaseUtils
         }
     }
 
+    public static List<String> getElections()
+    {
+    	String st; ResultSet res;
+    	List<String> list = new LinkedList<String>();
+    	if (connection == null) return list;
+    	try{
+    		st	= "SELECT * FROM elections";
+    		res = connection.prepareStatement(st).executeQuery();
+    		while(res.next()){
+    			String election = res.getString("election_name") + " | " + 
+    					res.getString("start_date") + " | " + res.getString("duration");
+    			list.add(election);
+    		}
+    		Collections.sort(list);
+    		return list;
+    	}
+    	catch(SQLException e)
+    	{
+    		e.printStackTrace();
+    		return list;
+    	}
+    }
+    
     /**
      * retrieves the list of all registered public keys
      * @return sorted list of registered 2048-bit RSA keys (base64url encoded)
@@ -140,37 +165,28 @@ public class DatabaseUtils
         String rst; PreparedStatement pst;
         try
         {
-            // create an elections table to hold meta-information
-            // on existing election block chains
-            rst = "CREATE TABLE IF NOT EXISTS elections (" +
-                    "public_key VARCHAR(683) PRIMARY KEY," +
-                    "block_count BIGINT NOT NULL" +     // next block number
-                    // TODO other useful information to keep handy?
-                    ");";
-            connection.prepareStatement(rst).executeUpdate();
-
             // create the new election block chain
-            rst = "CREATE TABLE e"+publicKey+" (" +
+            rst = "CREATE TABLE e"+publicKey.substring(0, 32)+" (" +
                     "_id BIGSERIAL PRIMARY KEY, " +            // arbitrary, unique ID
                     "block_no BIGINT NOT NULL, " +             // block number
-                    "block_content VARCHAR(638) NOT NULL, " +  // contents of the block -> urlbase64 encoded
-                    "_time BIGINT NOT NULL," +                 // epoch time
+                    "block_content VARCHAR(8192) NOT NULL, " +  // contents of the block OR election key -> urlbase64 encoded
+                    "timestamp BIGINT NOT NULL," +                 // epoch time
                     "current_hash VARCHAR(43) NOT NULL" +      // hash(content||prev_hash||time) -> urlbase64 encoded
                     ");";
             connection.prepareStatement(rst).executeUpdate();
 
             // insert the genesis block into the table
-            rst = "INSERT INTO e"+publicKey+" VALUES(NULL, ?, ?, '', ?);";
+            rst = "INSERT INTO e"+publicKey.substring(0, 32)+" VALUES(NULL, ?, ?, '', ?);";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, 0);
             pst.setString(2, publicKey);
             pst.setString(3, "[signature]");   // TODO create function to generate hash and sign with public key
 
-            // insert an entry into the table of elections
-            rst = "INSERT INTO elections VALUES(?,?);";
+            // update block number in the elections table
+            rst = "UPDATE elections SET block_count=? WHERE public_key=?;";	// TODO way to update block count w/o modifying others?
             pst = connection.prepareStatement(rst);
+            pst.setInt(0, 1);
             pst.setString(1, publicKey);
-            pst.setInt(2, 1);
 
             return 1 == pst.executeUpdate(); // return true if the entry was created
         }
@@ -179,5 +195,153 @@ public class DatabaseUtils
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * Adds records to the Elections and PrivateKeys tables to create a new election.
+     * Handles creating the key pair for the election.
+     * @param electionName Identifier for the election
+     * @param startDate Date on which the genesis block for the election should be created
+     * @param duration Time between genesis and terminus for the election
+     * @return True if the election is successfully created
+     */
+    public static Boolean createElection(String electionName, String startDate, String duration)
+    {
+    	if(connection == null) return false;
+    	String rst; PreparedStatement pst;
+    	KeyPair electionKeys; String pk, sk;
+    	try{
+    		// create an elections table to hold meta-information
+            // on existing election block chains
+            rst = "CREATE TABLE IF NOT EXISTS elections (" +
+                    "public_key VARCHAR(8192) PRIMARY KEY," + // public key -> urlbase64 encoded
+                    "block_count BIGINT NOT NULL," +     	// next block number
+                    "election_name VARCHAR(128)," +			// readable identifier, TODO unique?
+                    "start_date VARCHAR(10)," +				// YYYY-MM-DD
+                    "duration VARCHAR(20)" +				// "1 day", etc
+                    // other useful information to keep handy?
+                    ");";
+            connection.prepareStatement(rst).executeUpdate();
+            
+            // create a separate table to store private keys
+            rst = "CREATE TABLE IF NOT EXISTS private_keys (" +
+            		"public_key VARCHAR(32) PRIMARY KEY," +	// public key -> urlbase64 encoded -> [0:32]
+            		"private_key VARCHAR(8192)" +			// private key -> urlbase64 encoded
+            		");";	//TODO base64 encoding probably increases string length
+            connection.prepareStatement(rst).executeUpdate();
+            
+            // generate a key pair for the election
+            electionKeys = CryptoUtils.generateKeys();
+            pk = CryptoUtils.exportKey(electionKeys.getPublic());
+            sk = CryptoUtils.exportKey(electionKeys.getPrivate());
+            
+            //TEST
+            System.out.println("Election: " + electionName + "\nPK: " + pk);
+            
+            // store record for the Elections table
+            rst = "INSERT INTO elections VALUES (?, ?, ?, ?, ?)";
+            pst = connection.prepareStatement(rst);
+            pst.setString(1, pk);
+            pst.setInt(2, 0);
+            pst.setString(3, electionName);
+            pst.setString(4, startDate);	//TODO possibly convert to Date obj
+            pst.setString(5, duration);
+            pst.executeUpdate();
+            
+            // store record for the PrivateKeys table
+            rst = "INSERT INTO private_keys VALUES (?, ?)";
+            pst = connection.prepareStatement(rst);
+            pst.setString(1, pk.substring(0, 32));
+            pst.setString(2, sk);
+            pst.executeUpdate();
+            
+            return true;
+    	}
+    	catch(SQLException e)
+    	{
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+    
+    /**
+     * Processes a valid ballot and adds it to an election's blockchain
+     * @param ballot Base 64 encoded encrypted ballot
+     * @param electionKey	Primary key to identify the election
+     * @return True if the block was successfully added
+     */
+    public static boolean addToBlockchain(String ballot, String electionKey)
+    {
+    	if (connection == null) return false;
+    	
+    	try
+    	{
+    		//TODO
+    		return true;
+    	}
+    	catch(Exception e){
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+    
+    /**
+     * Reads through an election blockchain and returns a formatted list of blocks.
+     * @param electionKey Public key to identify an election
+     * @return List of blocks, each represented as a String
+     */
+    public static List<String> viewBlockchain(String electionKey)
+    {
+    	if (connection == null) return null;
+    	
+    	try
+    	{
+    		//TODO
+    		return null;
+    	}
+    	catch(Exception e){
+    		e.printStackTrace();
+    		return null;
+    	}
+    }
+    
+    /**
+     * Creates the terminus block for an election, releasing the private key.
+     * @param publicKey Public key to identify an election
+     * @return True if terminus block is successfully added
+     */
+    public static boolean terminateBlockChain(String publicKey)
+    {
+    	if (connection == null) return false;
+    	
+    	try
+    	{
+    		//TODO
+    		return true;
+    	}
+    	catch(Exception e){
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+    
+    /**
+     * Reads through a terminated election to determine its results.
+     * @param electionKey Public key to identify an election
+     * @return Map of each candidate to their tallied vote count.
+     */
+    public static Map<String, Integer> evaluateBlockchain(String electionKey)
+    {
+    	if (connection == null) return null;
+    	
+    	try
+    	{
+    		//TODO
+    		return null;
+    	}
+    	catch(Exception e){
+    		e.printStackTrace();
+    		return null;
+    	}
     }
 }

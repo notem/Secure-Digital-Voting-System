@@ -29,6 +29,28 @@ public class CreateElectionServlet extends HttpServlet
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+    	boolean err = false;
+    	request.setAttribute("err", "");
+    	
+    	String electionName = request.getParameter("electionName");
+    	String startDate = request.getParameter("startDate");
+    	String duration = request.getParameter("length");
+    	
+    	if(electionName == null || startDate == null || duration == null)
+    	{
+    		err = true;
+    		request.setAttribute("err", "Missing value, cannot create election.");
+    	}
+
+    	if(!err)
+    	{
+    		err = DatabaseUtils.createElection(electionName, startDate, duration);
+    		if(err)
+    		{
+    			request.setAttribute("err", "Failed to create election.");
+    		}
+    	}
+    	
         doGet(request, response);
     }
 }

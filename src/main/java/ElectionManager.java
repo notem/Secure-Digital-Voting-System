@@ -24,8 +24,7 @@ public class ElectionManager extends HttpServlet {
 		req.setAttribute("electionManagerActive", "true");
 		
 		// list of active elections
-		List<String> elections = new LinkedList();
-		elections.add("Test Election");
+		List<String> elections = DatabaseUtils.getElections();
 		req.setAttribute("elections", elections);
 		
 		// for each election, a list of voters
