@@ -4,8 +4,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import javax.crypto.Cipher;
 import java.math.BigInteger;
 import java.security.*;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.*;
 import java.util.Base64;
 
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -90,6 +89,44 @@ public class CryptoUtils
         if (format != null)
             return Base64.getEncoder().encodeToString(key.getEncoded());
         return null;
+    }
+
+    /**
+     * @param b64 base64 encoded private key export using the PKCS#8 format
+     * @return a new (RSA) private key
+     */
+    public static PrivateKey importPrivateKey(String b64)
+    {
+        try
+        {
+            byte[] bytes = Base64.getDecoder().decode(b64);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
+            return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * @param b64 base64 encoded public key export using the X509 SPKI format
+     * @return a new (RSA) public key
+     */
+    public static PublicKey importPublicKey(String b64)
+    {
+        try
+        {
+            byte[] bytes = Base64.getDecoder().decode(b64);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytes);
+            return KeyFactory.getInstance("RSA").generatePublic(keySpec);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
