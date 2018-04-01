@@ -73,7 +73,7 @@ public class BallotServlet extends HttpServlet
         /* verify that the ballot's modulus (key) is registered */
         if (!err)
         {
-            Boolean registered = DatabaseUtils.getPublicKeys().contains(ballot.modulus);
+            Boolean registered = DatabaseUtils.getVoterPublicKeys().contains(ballot.modulus);
             if (!registered)
             {
                 request.setAttribute("error", "Ballot contained an unknown voter key!");
@@ -101,8 +101,25 @@ public class BallotServlet extends HttpServlet
         /* send the encrypted ballot to be added to the block-chain */
         if (!err)
         {
-            // TODO: send encrypted ballot to the election's block chain
-            // DatabaseUtils.addToBlockChain(ballot);
+            // TODO: read public key from request or database
+        	PublicKey encryptionKey = keys.getPublic();
+        	String pk = CryptoUtils.exportKey(encryptionKey);
+        	
+        	boolean a,b,c;
+        	
+        	//TODO: Testing, remove when interfaces with legit elections are created
+        	a = DatabaseUtils.createElection("SubmitTest", String.format("%4.4f", Math.random()), "none", keys);
+        	b = DatabaseUtils.initializeElectionBlockchain(pk);
+        	
+            c = DatabaseUtils.addToBlockchain(data, pk);
+            
+            if (!a && !b && !c){
+            	request.setAttribute("error", "Failed to add ballot to election blockchain!");
+            	err = true;
+            }
+            else if (!a && !b && c){
+            	request.setAttribute("error", "Failed to initialize new blockchain. Does this blockchain already exist?");
+            }
         }
 
         /* refresh the page */

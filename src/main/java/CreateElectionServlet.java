@@ -44,7 +44,7 @@ public class CreateElectionServlet extends HttpServlet
 
     	if(!err)
     	{
-    		err = DatabaseUtils.createElection(electionName, startDate, duration);
+    		err = DatabaseUtils.createElection(electionName, startDate, duration, null);
     		if(err)
     		{
     			request.setAttribute("err", "Failed to create election.");

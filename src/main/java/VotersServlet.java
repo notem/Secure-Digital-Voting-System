@@ -23,7 +23,7 @@ public class VotersServlet extends HttpServlet
 
         /* grab voter information and set attribs*/
         List<String> voters = DatabaseUtils.getVoters();   // voter names from database
-        List<String> keys = DatabaseUtils.getPublicKeys(); // voter names from database
+        List<String> keys = DatabaseUtils.getVoterPublicKeys(); // voter PK moduli from database
         request.setAttribute("voters", voters); // add list to request
         request.setAttribute("keys", keys);     // add list to request
 

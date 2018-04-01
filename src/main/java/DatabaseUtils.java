@@ -111,8 +111,9 @@ public class DatabaseUtils
     		st	= "SELECT * FROM elections";
     		res = connection.prepareStatement(st).executeQuery();
     		while(res.next()){
-    			String election = res.getString("election_name") + " | " + 
-    					res.getString("start_date") + " | " + res.getString("duration");
+    			String election = res.getString("election_name") + " | " + res.getString("block_count") + 
+    					" | " + res.getString("start_date") + " | " + res.getString("duration") +
+    					"\n" + res.getString("public_key");
     			list.add(election);
     		}
     		Collections.sort(list);
@@ -129,7 +130,7 @@ public class DatabaseUtils
      * retrieves the list of all registered public keys
      * @return sorted list of registered 2048-bit RSA keys (base64url encoded)
      */
-    public static List<String> getPublicKeys()
+    public static List<String> getVoterPublicKeys()
     {
         String st; ResultSet res;
         List<String> list = new LinkedList<String>();
@@ -185,8 +186,8 @@ public class DatabaseUtils
             // update block number in the elections table
             rst = "UPDATE elections SET block_count=? WHERE public_key=?;";	// TODO way to update block count w/o modifying others?
             pst = connection.prepareStatement(rst);
-            pst.setInt(0, 1);
-            pst.setString(1, publicKey);
+            pst.setInt(1, 1);
+            pst.setString(2, publicKey);
 
             return 1 == pst.executeUpdate(); // return true if the entry was created
         }
@@ -203,13 +204,14 @@ public class DatabaseUtils
      * @param electionName Identifier for the election
      * @param startDate Date on which the genesis block for the election should be created
      * @param duration Time between genesis and terminus for the election
+     * @param electionKeys (optional) RSA-4096 key pair to utilize for the election 
      * @return True if the election is successfully created
      */
-    public static Boolean createElection(String electionName, String startDate, String duration)
+    public static Boolean createElection(String electionName, String startDate, String duration, KeyPair electionKeys)
     {
     	if(connection == null) return false;
     	String rst; PreparedStatement pst;
-    	KeyPair electionKeys; String pk, sk;
+    	KeyPair keys; String pk, sk;
     	try{
     		// create an elections table to hold meta-information
             // on existing election block chains
@@ -230,12 +232,15 @@ public class DatabaseUtils
             		");";	//TODO base64 encoding probably increases string length
             connection.prepareStatement(rst).executeUpdate();
             
-            // generate a key pair for the election
-            electionKeys = CryptoUtils.generateKeys();
-            pk = CryptoUtils.exportKey(electionKeys.getPublic());
-            sk = CryptoUtils.exportKey(electionKeys.getPrivate());
+            // generate or read a key pair for the election
+            if (electionKeys == null)
+            	keys = CryptoUtils.generateKeys();
+            else
+            	keys = electionKeys;
+            pk = CryptoUtils.exportKey(keys.getPublic());
+            sk = CryptoUtils.exportKey(keys.getPrivate());
             
-            //TEST
+            // debug output
             System.out.println("Election: " + electionName + "\nPK: " + pk);
             
             // store record for the Elections table
