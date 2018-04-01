@@ -33,10 +33,11 @@ public class CreateElectionServlet extends HttpServlet
     	request.setAttribute("err", "");
     	
     	String electionName = request.getParameter("electionName");
-    	String startDate = request.getParameter("startDate");
-    	String duration = request.getParameter("length");
-    	
-    	if(electionName == null || startDate == null || duration == null)
+    	String len = request.getParameter("length");
+        String startDate = "";
+    	String pubKey = request.getParameter("pubKey");
+
+    	if(electionName == null || startDate == null || len == null)
     	{
     		err = true;
     		request.setAttribute("err", "Missing value, cannot create election.");
@@ -44,13 +45,15 @@ public class CreateElectionServlet extends HttpServlet
 
     	if(!err)
     	{
-    		err = DatabaseUtils.createElection(electionName, startDate, duration, null);
+    		err = DatabaseUtils.createElection(electionName, startDate, len, null);
     		if(err)
     		{
     			request.setAttribute("err", "Failed to create election.");
     		}
     	}
     	
+
+        /* refresh the page */
         doGet(request, response);
     }
 }
