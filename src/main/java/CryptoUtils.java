@@ -200,7 +200,9 @@ public class CryptoUtils
     }
 
     /**
-     *
+     * @param data the data to sign encoded as a base64 string
+     * @param privKey the private key that can be used to sign the data
+     * @return base64 encoded signature
      */
     public static String signData(String data, PrivateKey privKey)
     {
@@ -220,17 +222,25 @@ public class CryptoUtils
     }
     
     /**
-     * Utility method to compute SHA-256 hashes 
-     * @param data Base-64 encoded string 
-     * @return	Base-64 encoded SHA-256 hash of the input
+     * Computes the hash value for a block in an election's blockchain
+     * @param block_content (base 64) encrypted ballot for most blocks, or an election key for genesis/terminus
+     * @param prev_hash (base 64) the hash value of the previous block
+     * @param timestamp milliseconds since epoch
+     * @return (base 64) SHA-256 hash of this block
      */
-    public static String hashData(String data)
+    public static String calculateBlockHash(String block_content, String prev_hash, long timestamp)
     {
     	try
     	{
-    		byte dbytes[] = Base64.getDecoder().decode(data);
-    		//...
-    		return Base64.getEncoder().encodeToString(dbytes);
+    		byte[] content = Base64.getDecoder().decode(block_content);
+    		//byte[] prev = Base64.getDecoder().decode(prev_hash);
+    		byte[] prev = prev_hash.getBytes();
+    		byte[] time = Long.toString(timestamp).getBytes();
+    		//TODO hash these things
+    		String notHash = Base64.getEncoder().encodeToString(content) + 
+    				Base64.getEncoder().encodeToString(prev) +
+    				Base64.getEncoder().encodeToString(time);
+    		return notHash.substring(0, Math.min(512, notHash.length()));
     	}
     	catch(Exception e)
     	{

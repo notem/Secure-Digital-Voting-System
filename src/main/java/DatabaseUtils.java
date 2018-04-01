@@ -1,5 +1,6 @@
 import java.security.KeyPair;
 import java.sql.*;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -163,6 +164,7 @@ public class DatabaseUtils
     {
         if (connection == null) return false;
         String rst; PreparedStatement pst;
+        long time;
         try
         {
             // create the new election block chain
@@ -171,19 +173,26 @@ public class DatabaseUtils
                     "block_no BIGINT NOT NULL, " +             // block number
                     "block_content VARCHAR(8192) NOT NULL, " +  // contents of the block OR election key -> urlbase64 encoded
                     "timestamp BIGINT NOT NULL," +                 // epoch time
-                    "current_hash VARCHAR(43) NOT NULL" +      // hash(content||prev_hash||time) -> urlbase64 encoded
+                    "current_hash VARCHAR(512) NOT NULL" +      // hash(content||prev_hash||time) -> urlbase64 encoded
                     ");";
             connection.prepareStatement(rst).executeUpdate();
 
+            // retrieve private key for signing
+            String privateKey = retrievePrivateKey(publicKey);
+            
             // insert the genesis block into the table
-            rst = "INSERT INTO e"+publicKey.substring(0, 32)+" VALUES(NULL, ?, ?, '', ?);";
+            rst = "INSERT INTO e"+publicKey.substring(0, 32)+" VALUES(?, ?, ?, ?, ?);";
             pst = connection.prepareStatement(rst);
-            pst.setInt(1, 0);
-            pst.setString(2, publicKey);
-            pst.setString(3, "[signature]");   // TODO create function to generate hash and sign with public key
+            pst.setInt(1, (int)(Math.random()*10000));
+            pst.setInt(2, 0);
+            pst.setString(3, publicKey);
+            time = System.currentTimeMillis();
+            pst.setLong(4, time);
+            pst.setString(5, "signed PK + time");   // TODO create function to generate hash and sign with public key
+            pst.executeUpdate();
 
             // update block number in the elections table
-            rst = "UPDATE elections SET block_count=? WHERE public_key=?;";	// TODO way to update block count w/o modifying others?
+            rst = "UPDATE elections SET block_count=? WHERE public_key=?;";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, 1);
             pst.setString(2, publicKey);
@@ -292,7 +301,7 @@ public class DatabaseUtils
     		}
     	}
     	catch(SQLException e){
-    		e.printStackTrace();
+    		System.err.println("Unable to retrieve private key.");
     		return null;
     	}
     }
@@ -306,10 +315,54 @@ public class DatabaseUtils
     public static boolean addToBlockchain(String ballot, String electionKey)
     {
     	if (connection == null) return false;
-    	
+    	String rst; PreparedStatement pst; ResultSet res;
+    	int blockCount; String prevHash; long time;
     	try
     	{
-    		//TODO
+    		//TODO verify that the blockchain relation exists?
+    		
+    		// determine next block number
+    		rst = "SELECT COUNT(*) AS count FROM e"+electionKey.substring(0, 32);
+    		pst = connection.prepareStatement(rst);
+    		res = pst.executeQuery();
+    		if(res.next())
+    			blockCount = res.getInt("count");
+    		else
+    			return false;
+    		
+    		//TEST
+    		System.out.println(viewBlockchain(electionKey));
+    		
+    		// query last block's hash
+    		rst = "SELECT current_hash FROM e"+electionKey.substring(0, 32)+" WHERE block_no=?";
+    		pst = connection.prepareStatement(rst);
+    		pst.setInt(1, blockCount - 1);
+    		res = pst.executeQuery();
+    		if(res.next())
+    			prevHash = res.getString("current_hash");
+    		else
+    			return false;
+    		
+    		// insert new block
+    		rst = "INSERT INTO e"+electionKey.substring(0, 32)+" VALUES (?,?,?,?,?)";
+    		pst = connection.prepareStatement(rst);
+    		pst.setInt(1, (int)(Math.random() * 10000));
+    		pst.setInt(2, blockCount);
+    		pst.setString(3, ballot);
+    		time = System.currentTimeMillis();
+    		pst.setLong(4, time);
+    		pst.setString(5, CryptoUtils.calculateBlockHash(ballot, prevHash, time));
+    		if (pst.executeUpdate() != 1)
+    			return false;
+    		
+    		// update block count for election
+    		rst = "UPDATE elections SET block_count = ? WHERE public_key = ?";
+    		pst = connection.prepareStatement(rst);
+    		pst.setInt(1, blockCount + 1);
+    		pst.setString(2, electionKey);
+    		if (pst.executeUpdate() != 1)
+    			return false;    		
+    		
     		return true;
     	}
     	catch(Exception e){
@@ -326,11 +379,21 @@ public class DatabaseUtils
     public static List<String> viewBlockchain(String electionKey)
     {
     	if (connection == null) return null;
-    	
+    	String rst; ResultSet res;
+    	List<String> list = new LinkedList<String>();
     	try
     	{
-    		//TODO
-    		return null;
+    		rst = "SELECT * FROM e"+electionKey.substring(0, 32);
+    		res = connection.prepareStatement(rst).executeQuery();
+    		while(res.next()){
+    			String block = res.getInt("_id") + " | " +
+    					res.getInt("block_no") + " | " + 
+    					res.getString("block_content") + " | " + 
+    					res.getLong("timestamp") + " | " +
+    					res.getString("current_hash");
+    			list.add(block);
+    		}
+    		return list;
     	}
     	catch(Exception e){
     		e.printStackTrace();
