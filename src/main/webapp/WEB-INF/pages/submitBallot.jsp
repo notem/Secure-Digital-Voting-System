@@ -31,6 +31,12 @@
     <form method="POST" action="${pageContext.request.contextPath}/ballot">
         <table border="0">
             <tr>
+                <td>Election Name</td>
+                <td>
+                    <input type="text" name="electionName" id="electionName" title="Election Name" />
+                </td>
+            </tr>
+            <tr>
                 <td>Encrypted Ballot</td>
                 <td>
                     <input type="text" name="ballot" id="ballot" title="Encrypted Ballot" />
@@ -78,7 +84,7 @@
         </tr>
         <tr>
             <td>Election Encryption Key</td>
-            <td><input type="text" name="electionKey" id="electionKey" title="Election Key" value="${encodedPublicKey}"/> </td>
+            <td><input type="text" name="electionKey" id="electionKey" title="Election Key" value=""/> </td>
         </tr>
         <tr>
             <td colspan ="2">

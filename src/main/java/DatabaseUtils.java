@@ -46,7 +46,7 @@ public class DatabaseUtils
      * @param pubKey unique public key to associate with the registration name
      * @return true if registration was successful
      */
-    public static Boolean registerVoter(String pubKey, String fname, String lname)
+    public static Boolean registerVoter(String pubKey, String fname, String lname, String election)
     {
         if (connection == null) return false;
         String rst; PreparedStatement pst;
@@ -55,17 +55,19 @@ public class DatabaseUtils
             rst = "CREATE TABLE IF NOT EXISTS voters (" +
                     "fname varchar (40) NOT NULL, " +
                     "lname varchar (40) NOT NULL, " +
-                    "key varchar (344) PRIMARY KEY, " +
-                    "UNIQUE (lname,fname)" +
+                    "key varchar (344) PRIMARY KEY, " +     // voter public key
+                    "election_name varchar (128) NOT NULL, " +    // public election key
+                    "UNIQUE (key,election_name)" +          // voter pub key and election name must be unique as a pair
                   ");";
             connection.prepareStatement(rst).executeUpdate();
 
             // insert new voter record into the table
-            rst = "INSERT INTO voters VALUES(?, ?, ?);";
+            rst = "INSERT INTO voters VALUES(?, ?, ?, ?);";
             pst = connection.prepareStatement(rst);
             pst.setString(1, fname);
             pst.setString(2, lname);
             pst.setString(3, pubKey);
+            pst.setString(4, election);
             return 1 == pst.executeUpdate(); // return true if one entry was update
         }
         catch (SQLException e)
@@ -77,17 +79,20 @@ public class DatabaseUtils
 
     /**
      * retrieves list of currently registered voters
+     * @param electionName the election for which to retrieve registered users
      * @return sorted list of voter names
      */
-    public static List<String> getVoters()
+    public static List<String> getVoters(String electionName)
     {
-        String st; ResultSet res;
+        String st; ResultSet res; PreparedStatement pst;
         List<String> list = new LinkedList<String>();
-        if (connection == null) return list;
+        if (connection == null || electionName == null) return list;
         try
         {
-            st  = "SELECT * FROM voters;";
-            res = connection.prepareStatement(st).executeQuery();
+            st  = "SELECT (fname, lname) FROM voters WHERE election_name=?;";
+            pst = connection.prepareStatement(st);
+            pst.setString(1, electionName);
+            res = pst.executeQuery();
             while(res.next())
             {
                 String name = res.getString("fname") + " " + res.getString("lname");
@@ -171,20 +176,22 @@ public class DatabaseUtils
             return list;
         }
     }
-    
+
     /**
      * retrieves the list of all registered public keys
      * @return sorted list of registered 2048-bit RSA keys (base64url encoded)
      */
-    public static List<String> getVoterPublicKeys()
+    public static List<String> getVoterPublicKeys(String electionName)
     {
-        String st; ResultSet res;
+        String st; ResultSet res; PreparedStatement pst;
         List<String> list = new LinkedList<String>();
         if (connection == null) return list;
         try
         {
-            st  = "SELECT * FROM voters;";
-            res = connection.prepareStatement(st).executeQuery();
+            st  = "SELECT (key) FROM voters WHERE election_name=?;";
+            pst = connection.prepareStatement(st);
+            pst.setString(1, electionName);
+            res = pst.executeQuery();
             while(res.next())
             {
                 list.add(res.getString("key"));
@@ -215,7 +222,7 @@ public class DatabaseUtils
         {
         	// derive blockchain relation name from public key's modulus
         	String relName = 'E'+CryptoUtils.exportPublicModulus(publicKey);
-        	
+
             // create the new election block chain
             rst = "CREATE TABLE "+relName+" (" +
                     "_id BIGSERIAL PRIMARY KEY, " +            	// arbitrary, unique ID
@@ -262,9 +269,7 @@ public class DatabaseUtils
      * Adds records to the Elections and PrivateKeys tables to create a new election.
      * Handles creating the key pair for the election.
      * @param electionName Identifier for the election
-     * @param startDate Date on which the genesis block for the election should be created
-     * @param duration Time between genesis and terminus for the election
-     * @param electionKeys (optional) RSA-4096 key pair to utilize for the election 
+     * @param electionKeys (optional) RSA-4096 key pair to utilize for the election
      * @return True if the election is successfully created
      */
     public static Boolean createElection(String electionName, KeyPair electionKeys)
@@ -277,9 +282,9 @@ public class DatabaseUtils
             // on existing election block chains
             rst = "CREATE TABLE IF NOT EXISTS elections (" +
                     "public_key VARCHAR(4096) PRIMARY KEY," + // public key -> urlbase64 encoded
-                    "block_count BIGINT NOT NULL," +     	// next block number
-                    "election_name VARCHAR(128)," +			// readable identifier, TODO unique?
-                    "active CHAR(1)" +                      // Active Flag to identify if election is active.
+                    "block_count BIGINT NOT NULL," +     	  // next block number
+                    "election_name VARCHAR(128) UNIQUE," +	  // readable (unique) identifier
+                    "active CHAR(1)" +                        // Active Flag to identify if election is active.
                                                             // other useful information to keep handy?
                     ");";
             connection.prepareStatement(rst).executeUpdate();
@@ -288,7 +293,7 @@ public class DatabaseUtils
             rst = "CREATE TABLE IF NOT EXISTS private_keys (" +
             		"public_key VARCHAR(4096) PRIMARY KEY," +	// public key -> urlbase64 encoded
             		"private_key VARCHAR(4096)" +				// private key -> urlbase64 encoded
-            		");";										// TODO base64 encoding of keys < 4096 bytes, can optimize 
+            		");";										// TODO base64 encoding of keys < 4096 bytes, can optimize
             connection.prepareStatement(rst).executeUpdate();
             
             // generate or read a key pair for the election
@@ -325,7 +330,38 @@ public class DatabaseUtils
     		return false;
     	}
     }
-    
+
+    /**
+     *
+     * @param electionName the (unique) name of an election
+     * @return an importable, base64 encoded public key (or null)
+     */
+    public static String retrievePublicKey(String electionName)
+    {
+        if (connection == null) return null;
+
+        String rst;
+        PreparedStatement pst;
+        ResultSet res;
+        try
+        {
+            rst = "SELECT public_Key FROM elections WHERE election_name=?;";
+            pst = connection.prepareStatement(rst);
+            pst.setString(1, electionName);
+            res = pst.executeQuery();
+
+            if(res.next())
+                return res.getString(1);
+            else
+                return null;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * Retrieves an election's private key from the private_keys table.
      * TODO This method is a security concern. Monitor closely. 
@@ -358,7 +394,7 @@ public class DatabaseUtils
     		return null;
     	}
     }
-    
+
     /**
      * Processes a valid ballot and adds it to an election's blockchain
      * @param ballot Base 64 encoded encrypted ballot
@@ -376,7 +412,7 @@ public class DatabaseUtils
     		
     		// derive blockchain relation name from public modulus
     		String relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
-    		
+
     		// determine next block number
     		rst = "SELECT COUNT(*) AS count FROM e"+electionKey.substring(0, 32);
     		pst = connection.prepareStatement(rst);
@@ -440,7 +476,7 @@ public class DatabaseUtils
     	try
     	{
     		relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
-    		
+
     		rst = "SELECT _id,block_no,block_content,timestamp,current_hash FROM "+relName;
     		res = connection.prepareStatement(rst).executeQuery();
     		while(res.next()){

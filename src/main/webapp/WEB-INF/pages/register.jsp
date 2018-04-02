@@ -24,24 +24,30 @@
     } %>
 
     <h3>Voter Registration</h3>
+    <p>Users must register to vote in a particular election. In order to register, the user's personal information must
+        be supplied along with a public key to be identified with.</p>
     <%-- this form registers arbitrary user names and keys --%>
     <form method="POST" action="${pageContext.request.contextPath}/register">
         <table border="0">
             <tr>
                 <td>First Name</td>
-                <td><input type="text" name="firstName" id="fname" title="First Name"/> </td>
+                <td><input type="text" name="firstName" id="fname" title="Your first name"/> </td>
             </tr>
             <tr>
                 <td>Last Name</td>
-                <td><input type="text" name="lastName" id="lname" title="Last Name"/> </td>
+                <td><input type="text" name="lastName" id="lname" title="Your last name"/> </td>
             </tr>
             <tr>
                 <td>Public Key</td>
-                <td><input type="text" id="modulusRegister" name="publicKey" title="RSA Public Key"/> </td>
+                <td><input type="text" id="modulusRegister" name="publicKey" title="Your voter public key"/> </td>
             </tr>
             <tr>
                 <td>Signature</td>
                 <td><input type="text" id="signature" name="signature" title="The RSA public key signature is used by the server to verify that you own the public key."/> </td>
+            </tr>
+            <tr>
+                <td>Election</td>
+                <td><input type="text" id="electionName" name="electionName" title="The name of the election you are registering for."/> </td>
             </tr>
             <tr>
                 <td colspan ="2">

@@ -32,7 +32,7 @@ public class ElectionManager extends HttpServlet {
 		req.setAttribute("closedElections", closedElections);
 
 		// for each election, a list of voters
-		List<String> voters = DatabaseUtils.getVoters();
+		List<String> voters = DatabaseUtils.getVoters(null);
 		req.setAttribute("voters", voters);
 		
 		// management utilities: view blockchain, close election
