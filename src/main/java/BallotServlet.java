@@ -81,7 +81,7 @@ public class BallotServlet extends HttpServlet
         /* verify that the ballot's modulus (key) is registered */
         if (!err)
         {
-            Boolean registered = DatabaseUtils.getVoterPublicKeys().contains(ballot.modulus);
+            Boolean registered = DatabaseUtils.getVoterPublicKeys(electionName).contains(ballot.modulus);
             if (!registered)
             {
                 request.setAttribute("error", "Ballot contained an unknown voter key!");

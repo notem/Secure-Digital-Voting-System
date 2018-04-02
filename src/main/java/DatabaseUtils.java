@@ -56,8 +56,8 @@ public class DatabaseUtils
                     "fname varchar (40) NOT NULL, " +
                     "lname varchar (40) NOT NULL, " +
                     "key varchar (344) PRIMARY KEY, " +     // voter public key
-                    "ele varchar NOT NULL, " +              // public election key
-                    "UNIQUE (key,ele)" +                    // voter pub key and election name must be unique as a pair
+                    "election_name varchar NOT NULL, " +    // public election key
+                    "UNIQUE (key,election_name)" +          // voter pub key and election name must be unique as a pair
                   ");";
             connection.prepareStatement(rst).executeUpdate();
 
@@ -79,17 +79,20 @@ public class DatabaseUtils
 
     /**
      * retrieves list of currently registered voters
+     * @param electionName the election for which to retrieve registered users
      * @return sorted list of voter names
      */
-    public static List<String> getVoters()
+    public static List<String> getVoters(String electionName)
     {
-        String st; ResultSet res;
+        String st; ResultSet res; PreparedStatement pst;
         List<String> list = new LinkedList<String>();
-        if (connection == null) return list;
+        if (connection == null || electionName == null) return list;
         try
         {
-            st  = "SELECT * FROM voters;";
-            res = connection.prepareStatement(st).executeQuery();
+            st  = "SELECT (fname, lname) FROM voters WHERE election_name=?;";
+            pst = connection.prepareStatement(st);
+            pst.setString(1, electionName);
+            res = pst.executeQuery();
             while(res.next())
             {
                 String name = res.getString("fname") + " " + res.getString("lname");
@@ -178,15 +181,17 @@ public class DatabaseUtils
      * retrieves the list of all registered public keys
      * @return sorted list of registered 2048-bit RSA keys (base64url encoded)
      */
-    public static List<String> getVoterPublicKeys()
+    public static List<String> getVoterPublicKeys(String electionName)
     {
-        String st; ResultSet res;
+        String st; ResultSet res; PreparedStatement pst;
         List<String> list = new LinkedList<String>();
         if (connection == null) return list;
         try
         {
-            st  = "SELECT * FROM voters;";
-            res = connection.prepareStatement(st).executeQuery();
+            st  = "SELECT (key) FROM voters WHERE election_name=?;";
+            pst = connection.prepareStatement(st);
+            pst.setString(1, electionName);
+            res = pst.executeQuery();
             while(res.next())
             {
                 list.add(res.getString("key"));
