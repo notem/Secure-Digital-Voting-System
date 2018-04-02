@@ -233,14 +233,22 @@ public class CryptoUtils
     	try
     	{
     		byte[] content = Base64.getDecoder().decode(block_content);
-    		//byte[] prev = Base64.getDecoder().decode(prev_hash);
+    		//byte[] prev = Base64.getDecoder().decode(prev_hash); //TODO ensure base64 compatibility w/ genesis block 
     		byte[] prev = prev_hash.getBytes();
     		byte[] time = Long.toString(timestamp).getBytes();
-    		//TODO hash these things
-    		String notHash = Base64.getEncoder().encodeToString(content) + 
-    				Base64.getEncoder().encodeToString(prev) +
-    				Base64.getEncoder().encodeToString(time);
-    		return notHash.substring(0, Math.min(512, notHash.length()));
+
+//    		String notHash = Base64.getEncoder().encodeToString(content) + 
+//    				Base64.getEncoder().encodeToString(prev) +
+//    				Base64.getEncoder().encodeToString(time);
+//    		return notHash.substring(0, Math.min(512, notHash.length()));
+
+    		MessageDigest md = MessageDigest.getInstance("SHA-256");
+    		md.update(content);
+    		md.update(prev);
+    		md.update(time);
+    		byte[] hash = md.digest();
+    		
+    		return Base64.getEncoder().encodeToString(hash);
     	}
     	catch(Exception e)
     	{
