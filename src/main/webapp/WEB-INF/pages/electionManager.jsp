@@ -15,7 +15,8 @@
 <div class="container">
 	<h3>Upcoming Elections</h3>
 	<ul>
-		<c:forEach var="upcomingElection" items="${upcomingElections}">
+		<c:forEach var="upcomingElection" items="${upcomingElections}" varStatus="loop">
+			<c:set var="index" value="${loop.index}"/>
 			<li>
 				<h4><c:out value="${upcomingElection}" /></h4>
 				<ul>
@@ -26,13 +27,15 @@
 					</c:forEach>
 				</ul>
 			</li>
+			<button type="button" value="${upcomingNames[index]}">Make Active</button>
 		</c:forEach>
 	</ul>
 
     <h3>Active Elections</h3>
     <ul>
-    	<c:forEach var="activeElection" items="${activeElections}">
-    		<li>
+    	<c:forEach var="activeElection" items="${activeElections}" varStatus="loop">
+    		<c:set var="index" value="${loop.index}"/>
+			<li>
     			<h4><c:out value="${activeElection}" /></h4>
     			<ul>
 			        <c:forEach var="voter" items="${voters}">
@@ -42,6 +45,7 @@
 			    	</c:forEach>
 			    </ul>
 			</li>
+			<button type="button" value="${activeNames[index]}">End Election</button>
 		</c:forEach>
     </ul>
     

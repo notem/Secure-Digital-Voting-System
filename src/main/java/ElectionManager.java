@@ -23,13 +23,19 @@ public class ElectionManager extends HttpServlet {
 
 		// list of upcoming elections
 		List<String> upcomingElections = DatabaseUtils.getUpcomingElections();
+		List<String> upcomingNames = DatabaseUtils.getUpcomingNames();
 		req.setAttribute("upcomingElections", upcomingElections);
+		req.setAttribute("upcomingNames", upcomingNames);
 		// list of active elections
 		List<String> activeElections = DatabaseUtils.getElections();
+		List<String> activeNames = DatabaseUtils.getActiveNames();
 		req.setAttribute("activeElections", activeElections);
+		req.setAttribute("activeNames", activeNames);
 		// list of closed elections
 		List<String> closedElections = DatabaseUtils.getClosedElections();
+		List<String> closedNames = DatabaseUtils.getClosedNames();
 		req.setAttribute("closedElections", closedElections);
+		req.setAttribute("closedNames", closedNames);
 
 		// for each election, a list of voters
 		List<String> voters = DatabaseUtils.getVoters(null);

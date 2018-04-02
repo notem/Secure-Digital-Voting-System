@@ -131,6 +131,72 @@ public class DatabaseUtils
     	}
     }
 
+    public static List<String> getUpcomingNames()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
+        try{
+            st	= "SELECT election_name FROM elections WHERE active LIKE 'U'";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next()){
+                String election = res.getString("election_name");
+                list.add(election);
+            }
+            Collections.sort(list);
+            return list;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+    }
+
+    public static List<String> getActiveNames()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
+        try{
+            st	= "SELECT election_name FROM elections WHERE active LIKE 'Y'";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next()){
+                String election = res.getString("election_name");
+                list.add(election);
+            }
+            Collections.sort(list);
+            return list;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+    }
+
+    public static List<String> getClosedNames()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
+        try{
+            st	= "SELECT election_name FROM elections WHERE active LIKE 'N'";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next()){
+                String election = res.getString("election_name");
+                list.add(election);
+            }
+            Collections.sort(list);
+            return list;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+    }
+
     public static List<String> getUpcomingElections()
     {
         String st; ResultSet res;
