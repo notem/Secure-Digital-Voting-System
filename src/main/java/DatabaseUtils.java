@@ -1,10 +1,7 @@
 import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.sql.*;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DatabaseUtils
 {
@@ -600,16 +597,66 @@ public class DatabaseUtils
      */
     public static Map<String, Integer> evaluateBlockchain(String electionKey)
     {
-    	if (connection == null) return null;
-    	
+        Map<String, Integer> results = new HashMap<String, Integer>();  // dict of candidate to vote count
+        Set<String> voted = new HashSet<String>();  // set containing all modulus which were used to vote
+    	if (connection == null) return results;
+
+        String rst, relName; PreparedStatement pst; ResultSet res;
     	try
     	{
-    		//TODO
-    		return null;
+    	    // query the elections table to learn the election's last block number and active status
+    	    rst = "SELECT (block_count, active) FROM elections WHERE public_key=?;";
+    	    pst = connection.prepareStatement(rst);
+    	    pst.setString(1, electionKey);
+    	    res = pst.executeQuery();
+
+    	    // if the query was successful and the election is no longer active, generate the election results
+    	    if (res.next() && res.getString(2).equalsIgnoreCase("n"))
+            {
+                int lastBlockNo = res.getInt(1); // last block number (terminating block)
+
+    	        // get the election's decryption key
+                PrivateKey decryptionKey = CryptoUtils.importPrivateKey(retrievePrivateKey(electionKey));
+
+    	        // query for all blocks in the block chain, sorted in descending order
+                relName = deriveBlockchainName(electionKey);
+                rst = "SELECT (block_no, block_content) FROM " + relName + " ORDER BY block_no DESC;";
+                res = connection.prepareStatement(rst).executeQuery();
+
+                /* for each block */
+                while(res.next())
+                {
+                    Integer blockNo   = res.getInt(1);
+                    String block = res.getString(2);
+                    if (blockNo < lastBlockNo && blockNo > 0) // ignore the genesis and terminating block
+                    {
+                        try // attempt to decrypt the ballot and increment the candidate count
+                        {
+                            BallotServlet.DecryptedBallot ballot =
+                                    new BallotServlet.DecryptedBallot(block, decryptionKey);
+
+                            // count the vote only if the voter's ballot has not already been counted
+                            if (!voted.contains(ballot.modulus))
+                            {
+                                voted.add(ballot.modulus);
+                                int count = (results.containsKey(ballot.candidate) ?
+                                        results.get(ballot.candidate) : 0);
+                                results.put(ballot.candidate, count+1); // increment the candidate count
+                            }
+                        }
+                        catch(IllegalArgumentException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return results;
     	}
-    	catch(Exception e){
+    	catch(Exception e)
+        {
     		e.printStackTrace();
-    		return null;
+    		return results;
     	}
     }
 }

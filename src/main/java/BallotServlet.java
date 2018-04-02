@@ -117,7 +117,7 @@ public class BallotServlet extends HttpServlet
 
     /**
      */
-    public class DecryptedBallot
+    public static class DecryptedBallot
     {
         String encodedBallot; // full ballot (base64 encoded)
         byte[] encrypted;     // 512 bytes (4096 bits)
