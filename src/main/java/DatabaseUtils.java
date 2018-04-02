@@ -213,35 +213,41 @@ public class DatabaseUtils
         long time;
         try
         {
+        	// derive blockchain relation name from public key's modulus
+        	String relName = 'E'+CryptoUtils.exportPublicModulus(publicKey);
+        	
             // create the new election block chain
-            rst = "CREATE TABLE e"+publicKey.substring(0, 32)+" (" +
-                    "_id BIGSERIAL PRIMARY KEY, " +            // arbitrary, unique ID
-                    "block_no BIGINT NOT NULL, " +             // block number
-                    "block_content VARCHAR(8192) NOT NULL, " +  // contents of the block OR election key -> urlbase64 encoded
-                    "timestamp BIGINT NOT NULL," +                 // epoch time
-                    "current_hash VARCHAR(512) NOT NULL" +      // hash(content||prev_hash||time) -> urlbase64 encoded
+            rst = "CREATE TABLE "+relName+" (" +
+                    "_id BIGSERIAL PRIMARY KEY, " +            	// arbitrary, unique ID
+                    "block_no BIGINT NOT NULL, " +             	// block number
+                    "block_content VARCHAR(4096) NOT NULL, " +  // contents of the block OR election key -> urlbase64 encoded
+                    "timestamp BIGINT NOT NULL," +              // epoch time in millis
+                    "current_hash VARCHAR(4096) NOT NULL" +     // hash(content||prev_hash||time) OR election key signature -> urlbase64 encoded
                     ");";
             connection.prepareStatement(rst).executeUpdate();
 
             // retrieve private key for signing
+            // TODO sign using administrative key rather than election?
             String privateKey = retrievePrivateKey(publicKey);
             
             // insert the genesis block into the table
-            rst = "INSERT INTO e"+publicKey.substring(0, 32)+" VALUES(?, ?, ?, ?, ?);";
+            rst = "INSERT INTO "+relName+" VALUES(?, ?, ?, ?, ?);";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, (int)(Math.random()*10000));
             pst.setInt(2, 0);
             pst.setString(3, publicKey);
             time = System.currentTimeMillis();
             pst.setLong(4, time);
-            pst.setString(5, "signed PK + time");   // TODO create function to generate hash and sign with public key
+            String timestamp = Base64.getEncoder().encodeToString(Long.toString(time).getBytes());
+            pst.setString(5, CryptoUtils.signData(publicKey+timestamp, CryptoUtils.importPrivateKey(privateKey)));
             pst.executeUpdate();
 
             // update block number in the elections table
-            rst = "UPDATE elections SET block_count=? WHERE public_key=?;";
+            rst = "UPDATE elections SET block_count=?, active=? WHERE public_key=?;";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, 1);
-            pst.setString(2, publicKey);
+            pst.setString(2, "Y");
+            pst.setString(3, publicKey);
 
             return 1 == pst.executeUpdate(); // return true if the entry was created
         }
@@ -270,7 +276,7 @@ public class DatabaseUtils
     		// create an elections table to hold meta-information
             // on existing election block chains
             rst = "CREATE TABLE IF NOT EXISTS elections (" +
-                    "public_key VARCHAR(8192) PRIMARY KEY," + // public key -> urlbase64 encoded
+                    "public_key VARCHAR(4096) PRIMARY KEY," + // public key -> urlbase64 encoded
                     "block_count BIGINT NOT NULL," +     	// next block number
                     "election_name VARCHAR(128)," +			// readable identifier, TODO unique?
                     "active CHAR(1)" +                      // Active Flag to identify if election is active.
@@ -280,9 +286,9 @@ public class DatabaseUtils
             
             // create a separate table to store private keys
             rst = "CREATE TABLE IF NOT EXISTS private_keys (" +
-            		"public_key VARCHAR(8192) PRIMARY KEY," +	// public key -> urlbase64 encoded -> [0:32]
-            		"private_key VARCHAR(8192)" +			// private key -> urlbase64 encoded
-            		");";	//TODO base64 encoding probably increases string length
+            		"public_key VARCHAR(4096) PRIMARY KEY," +	// public key -> urlbase64 encoded
+            		"private_key VARCHAR(4096)" +				// private key -> urlbase64 encoded
+            		");";										// TODO base64 encoding of keys < 4096 bytes, can optimize 
             connection.prepareStatement(rst).executeUpdate();
             
             // generate or read a key pair for the election
@@ -368,6 +374,9 @@ public class DatabaseUtils
     	{
     		//TODO verify that the blockchain relation exists?
     		
+    		// derive blockchain relation name from public modulus
+    		String relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
+    		
     		// determine next block number
     		rst = "SELECT COUNT(*) AS count FROM e"+electionKey.substring(0, 32);
     		pst = connection.prepareStatement(rst);
@@ -376,12 +385,12 @@ public class DatabaseUtils
     			blockCount = res.getInt("count");
     		else
     			return false;
-    		
-    		//TEST
-    		System.out.println(viewBlockchain(electionKey));
+
+//    		// for testing purposes
+//    		System.out.println(viewBlockchain(electionKey));
     		
     		// query last block's hash
-    		rst = "SELECT current_hash FROM e"+electionKey.substring(0, 32)+" WHERE block_no=?";
+    		rst = "SELECT current_hash FROM "+relName+" WHERE block_no=?";
     		pst = connection.prepareStatement(rst);
     		pst.setInt(1, blockCount - 1);
     		res = pst.executeQuery();
@@ -391,7 +400,7 @@ public class DatabaseUtils
     			return false;
     		
     		// insert new block
-    		rst = "INSERT INTO e"+electionKey.substring(0, 32)+" VALUES (?,?,?,?,?)";
+    		rst = "INSERT INTO "+relName+" VALUES (?,?,?,?,?)";
     		pst = connection.prepareStatement(rst);
     		pst.setInt(1, (int)(Math.random() * 10000));
     		pst.setInt(2, blockCount);
@@ -426,11 +435,13 @@ public class DatabaseUtils
     public static List<String> viewBlockchain(String electionKey)
     {
     	if (connection == null) return null;
-    	String rst; ResultSet res;
+    	String rst; ResultSet res; String relName;
     	List<String> list = new LinkedList<String>();
     	try
     	{
-    		rst = "SELECT * FROM e"+electionKey.substring(0, 32);
+    		relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
+    		
+    		rst = "SELECT _id,block_no,block_content,timestamp,current_hash FROM "+relName;
     		res = connection.prepareStatement(rst).executeQuery();
     		while(res.next()){
     			String block = res.getInt("_id") + " | " +

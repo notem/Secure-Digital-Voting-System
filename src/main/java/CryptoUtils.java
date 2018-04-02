@@ -5,6 +5,7 @@ import javax.crypto.Cipher;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.*;
+import java.security.interfaces.*;
 import java.util.Base64;
 
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -89,6 +90,29 @@ public class CryptoUtils
         if (format != null)
             return Base64.getEncoder().encodeToString(key.getEncoded());
         return null;
+    }
+    
+    /**
+     * @param pk an RSAPublicKey object or corresponding base64 String 
+     * @return Base64 encoded public modulus for the key pair
+     */
+    public static String exportPublicModulus(PublicKey pk){
+    	try {
+    		BigInteger modulus = ((RSAKey)pk).getModulus();
+    		return Base64.getEncoder().encodeToString(modulus.toByteArray());
+    	}
+    	catch(Exception e){
+    		e.printStackTrace();
+    		return null;
+    	}
+    }
+    
+    /**
+     * @param pk an RSAPublicKey object or corresponding base64 String 
+     * @return Base64 encoded public modulus for the key pair
+     */
+    public static String exportPublicModulus(String b64){
+    	return exportPublicModulus(importPublicKey(b64));
     }
 
     /**
