@@ -54,7 +54,7 @@
         </tr>
         <c:forEach var="block" items="${blockchain}">
             <tr>
-                <c:out value="${blockchain}" />
+                <c:out value="${block}" />
             </tr>
         </c:forEach>
     </table>
