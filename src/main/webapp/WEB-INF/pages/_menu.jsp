@@ -3,7 +3,7 @@
 <nav class="navbar navbar-inverse">
     <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}/">WebSiteName</a>
+            <a class="navbar-brand" href="${pageContext.request.contextPath}/">Secure Voting System</a>
         </div>
         <ul class="nav navbar-nav">
             <li <% if(request.getAttribute("homeActive") != null) { %> class="active" <% } %>>

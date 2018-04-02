@@ -4,7 +4,12 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 @WebServlet(urlPatterns = { "/create-election"})
 public class CreateElectionServlet extends HttpServlet
@@ -33,7 +38,13 @@ public class CreateElectionServlet extends HttpServlet
     	request.setAttribute("err", "");
     	
     	String electionName = request.getParameter("electionName");
-    	String pubKey = request.getParameter("pubKey"); //TODO either add JS keygen or remove
+		byte[] pub = DatatypeConverter.parseBase64Binary(request.getParameter("pubKey"));
+		byte[] priv = DatatypeConverter.parseBase64Binary(request.getParameter("privKey"));
+		try {
+			PublicKey pubK = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(pub));
+			PrivateKey privK = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(priv));
+			KeyPair keys = new KeyPair(pubK, privK);
+
 
     	if(electionName == null)
     	{
@@ -41,16 +52,24 @@ public class CreateElectionServlet extends HttpServlet
     		request.setAttribute("err", "Missing election name, cannot create election.");
     	}
 
+    	if(keys == null) {
+    		err = true;
+			request.setAttribute("err", "Missing Public and Private Keys, cannot create election.");
+		}
     	if(!err)
     	{
-    		err = DatabaseUtils.createElection(electionName, null);
+    		err = DatabaseUtils.createElection(electionName, keys);
     		if(err)
     		{
     			request.setAttribute("err", "Failed to create election.");
     		}
     	}
-    	
 
+		} catch (InvalidKeySpecException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
         /* refresh the page */
         doGet(request, response);
     }
