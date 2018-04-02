@@ -29,7 +29,7 @@
         Your voter private key and the election's public key must be imported before choosing a candidate and creating the ballot (see below).</p>
     <p id="test"></p>
     <form method="POST" action="${pageContext.request.contextPath}/ballot">
-        <table border="0">
+        <table border="0" class="table">
             <tr>
                 <td>Election Name</td>
                 <td>

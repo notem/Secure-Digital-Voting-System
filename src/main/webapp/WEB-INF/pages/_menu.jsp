@@ -18,14 +18,14 @@
             <li <% if(request.getAttribute("createElectionActive") != null) { %> class="active" <% } %>>
                 <a href="${pageContext.request.contextPath}/create-election">Create Election</a>
             </li>
-            <li <% if(request.getAttribute("votersActive") != null) { %> class="active" <% } %>>
-                <a href="${pageContext.request.contextPath}/voters">List of Voters</a>
-            </li>
             <li <% if(request.getAttribute("registerActive") != null) { %> class="active" <% } %>>
-                <a href="${pageContext.request.contextPath}/register">Register</a>
+                <a href="${pageContext.request.contextPath}/register">Registration</a>
             </li>
             <li <% if(request.getAttribute("ballotActive") != null) { %> class="active" <% } %>>
                 <a href="${pageContext.request.contextPath}/ballot">Submit a Ballot</a>
+            </li>
+            <li <% if(request.getAttribute("viewActive") != null) { %> class="active" <% } %>>
+                <a href="${pageContext.request.contextPath}/view">View Election</a>
             </li>
         </ul>
     </div>

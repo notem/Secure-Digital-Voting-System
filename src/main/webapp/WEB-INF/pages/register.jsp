@@ -28,7 +28,7 @@
         be supplied along with a public key to be identified with.</p>
     <%-- this form registers arbitrary user names and keys --%>
     <form method="POST" action="${pageContext.request.contextPath}/register">
-        <table border="0">
+        <table border="0" class="table">
             <tr>
                 <td>First Name</td>
                 <td><input type="text" name="firstName" id="fname" title="Your first name"/> </td>

@@ -1,7 +1,9 @@
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.sql.*;
+import java.time.Instant;
 import java.util.*;
+import java.util.Date;
 
 public class DatabaseUtils
 {
@@ -537,11 +539,12 @@ public class DatabaseUtils
     		return false;
     	}
     }
-    
+
+
     /**
      * Reads through an election blockchain and returns a formatted list of blocks.
      * @param electionKey Public key to identify an election
-     * @return List of blocks, each represented as a String
+     * @return List of blocks, each represented as cells in an HTML table row
      */
     public static List<String> viewBlockchain(String electionKey)
     {
@@ -552,19 +555,21 @@ public class DatabaseUtils
     	{
     		relName = deriveBlockchainName(electionKey);
 
-    		rst = "SELECT _id,block_no,block_content,timestamp,current_hash FROM "+relName;
+    		rst = "SELECT (_id,block_no,block_content,timestamp,current_hash) FROM "+relName+" ORDER BY block_no ASC;";
     		res = connection.prepareStatement(rst).executeQuery();
-    		while(res.next()){
-    			String block = res.getInt("_id") + " | " +
-    					res.getInt("block_no") + " | " + 
-    					res.getString("block_content") + " | " + 
-    					res.getLong("timestamp") + " | " +
-    					res.getString("current_hash");
+    		while(res.next())
+            {
+    			String block = "" +
+                        "<td>"+ res.getInt("block_no") + "</td>" +
+                        "<td>"+ Date.from(Instant.ofEpochMilli(res.getLong("timestamp"))) + "</td>" +
+                        "<td>"+ res.getString("block_content") + "</td>" +
+    					"<td>"+ res.getString("current_hash") + "</td>";
     			list.add(block);
     		}
     		return list;
     	}
-    	catch(Exception e){
+    	catch(Exception e)
+        {
     		e.printStackTrace();
     		return null;
     	}
