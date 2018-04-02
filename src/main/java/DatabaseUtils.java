@@ -273,6 +273,17 @@ public class DatabaseUtils
     }
 
     /**
+     * Utility to derive a unique ID for each election which is a valid relation name.
+     * The ID is the first 63 chars of the public modulus of the election keypair, base64 encoded, with + and / removed.
+     * @param publicKey Base 64 encoded public key
+     * @return Relation name for the election blockchain.
+     */
+    public static String deriveBlockchainName(String publicKey){
+    	String modulus = CryptoUtils.exportPublicModulus(publicKey);
+    	return modulus.substring(0, 63).replaceAll("[+/]", "_");
+    }
+    
+    /**
      * creates a new table to hold an elections blockchain
      * adds an entry for that election blockchain to the elections table (for easier referencing)
      * inserts the genesis block (contains blockchain encryption key)
@@ -287,7 +298,7 @@ public class DatabaseUtils
         try
         {
         	// derive blockchain relation name from public key's modulus
-        	String relName = 'E'+CryptoUtils.exportPublicModulus(publicKey);
+        	String relName = deriveBlockchainName(publicKey);
 
             // create the new election block chain
             rst = "CREATE TABLE "+relName+" (" +
@@ -443,7 +454,7 @@ public class DatabaseUtils
     	try{
     		rst = "SELECT private_key FROM private_keys WHERE public_key=?";
     		pst = connection.prepareStatement(rst);
-    		pst.setString(1, publicKey.substring(0,  32));
+    		pst.setString(1, publicKey);
     		res = pst.executeQuery();
     		
     		if(res.next())
@@ -477,10 +488,11 @@ public class DatabaseUtils
     		//TODO verify that the blockchain relation exists?
     		
     		// derive blockchain relation name from public modulus
-    		String relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
-
+    		String relName = deriveBlockchainName(electionKey);
+    		System.out.println("Hi hello the relName is " + relName);
+    		
     		// determine next block number
-    		rst = "SELECT COUNT(*) AS count FROM e"+electionKey.substring(0, 32);
+    		rst = "SELECT COUNT(_id) AS count FROM "+relName;
     		pst = connection.prepareStatement(rst);
     		res = pst.executeQuery();
     		if(res.next())
@@ -541,7 +553,7 @@ public class DatabaseUtils
     	List<String> list = new LinkedList<String>();
     	try
     	{
-    		relName = 'E'+CryptoUtils.exportPublicModulus(electionKey);
+    		relName = deriveBlockchainName(electionKey);
 
     		rst = "SELECT _id,block_no,block_content,timestamp,current_hash FROM "+relName;
     		res = connection.prepareStatement(rst).executeQuery();
