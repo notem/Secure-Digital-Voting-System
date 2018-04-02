@@ -233,7 +233,7 @@ public class DatabaseUtils
             
             // create a separate table to store private keys
             rst = "CREATE TABLE IF NOT EXISTS private_keys (" +
-            		"public_key VARCHAR(32) PRIMARY KEY," +	// public key -> urlbase64 encoded -> [0:32]
+            		"public_key VARCHAR(8192) PRIMARY KEY," +	// public key -> urlbase64 encoded -> [0:32]
             		"private_key VARCHAR(8192)" +			// private key -> urlbase64 encoded
             		");";	//TODO base64 encoding probably increases string length
             connection.prepareStatement(rst).executeUpdate();
