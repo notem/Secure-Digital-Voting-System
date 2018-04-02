@@ -17,7 +17,6 @@ import static java.lang.Math.abs;
 @WebServlet(urlPatterns = { "/ballot"})
 public class BallotServlet extends HttpServlet
 {
-    private static KeyPair keys = CryptoUtils.generateKeys(); // TODO: temporary for testing until functionality for retrieving real election keys exist
     public BallotServlet()
     {
         super();
@@ -28,9 +27,6 @@ public class BallotServlet extends HttpServlet
             throws ServletException, IOException
     {
         request.setAttribute("ballotActive", "");
-
-        String encodedPub = CryptoUtils.exportKey(keys.getPublic());
-        request.setAttribute("encodedPublicKey", encodedPub);
 
         /* forward the request onto the jsp compiler */
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/submitBallot.jsp");
@@ -52,11 +48,23 @@ public class BallotServlet extends HttpServlet
             err = true;
         }
 
+        // verify that the election name exists
+        String electionName = request.getParameter("electionName");
+        if (!err && DatabaseUtils.retrievePublicKey(electionName)==null)
+        {
+            request.setAttribute("error", "There is no election named "+electionName+"!");
+            err = true;
+        }
+
+        // grab the election (public) key, later used for
+        String electionKey = DatabaseUtils.retrievePublicKey(electionName);
+
         /* parse the encrypted data into a decrypted & verified ballot object */
-        PrivateKey decryptionKey = keys.getPrivate(); // TODO: grab election's private key before decrypting the ballot
         DecryptedBallot ballot = null;
         if (!err)
         {
+            /* pull private key from database using the election name */
+            PrivateKey decryptionKey = CryptoUtils.importPrivateKey(DatabaseUtils.retrievePrivateKey(electionKey));
             try /* DecryptedBallot constructor will through illegal argument errors if ballot is invalid */
             {
                 ballot = new DecryptedBallot(data, decryptionKey);
@@ -92,41 +100,14 @@ public class BallotServlet extends HttpServlet
             }
         }
 
-        /* verify candidate choice is valid */
-        if (!err)
-        {
-            // TODO: verify that the candidate's choice is an option?
-        }
-
         /* send the encrypted ballot to be added to the block-chain */
         if (!err)
         {
-            // TODO: read public key from request or database
-        	PublicKey encryptionKey = keys.getPublic();
-        	String pk = CryptoUtils.exportKey(encryptionKey);
-        	
-        	boolean a,b,c;
-        	
-        	//TODO: Testing, remove when interfaces with legit elections are created
-        	if(DatabaseUtils.retrievePrivateKey(pk) == null)
-        	{
-        		a = DatabaseUtils.createElection("SubmitTest" + String.format("%4f", 1000 * Math.random()), keys);
-        		b = DatabaseUtils.initializeElectionBlockchain(pk);
-        	}
-        	else
-        	{
-        		a = true;
-        		b = true;
-        	}
-        	
-            c = DatabaseUtils.addToBlockchain(data, pk);
-            
-            if (!c){
-            	request.setAttribute("error", "Failed to add ballot to election blockchain!");
-            	err = true;
-            }
-            else if (!a && !b && c){
-            	request.setAttribute("error", "Failed to initialize new blockchain. Does this blockchain already exist?");
+            boolean res = DatabaseUtils.addToBlockchain(ballot.encodedBallot, electionKey);
+            if (!res)
+            {
+                request.setAttribute("error", "Your ballot was rejected by the election manager!");
+                err = true;
             }
         }
 

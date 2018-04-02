@@ -33,10 +33,11 @@ public class RegisterServlet extends HttpServlet
             throws ServletException, IOException
     {
         /* grab registration information */
-        String fname = request.getParameter("firstName");
-        String lname = request.getParameter("lastName");
-        String pub   = request.getParameter("publicKey");
-        String sig   = request.getParameter("signature");
+        String fname    = request.getParameter("firstName");
+        String lname    = request.getParameter("lastName");
+        String election = request.getParameter("electionName");
+        String pub      = request.getParameter("publicKey");
+        String sig      = request.getParameter("signature");
 
         /* do some (very basic) input validation */
         boolean err = false;
@@ -51,6 +52,13 @@ public class RegisterServlet extends HttpServlet
             err = true;
         }
 
+        // verify that the election name exists
+        if (!err && DatabaseUtils.retrievePublicKey(election)==null)
+        {
+            request.setAttribute("error", "There is no election named "+election+"!");
+            err = true;
+        }
+
         // verify public key signature
         PublicKey pubKey = CryptoUtils.createPublicKey(pub);
         if (!err && !CryptoUtils.verifySignature(pub, sig, pubKey))
@@ -62,7 +70,7 @@ public class RegisterServlet extends HttpServlet
         if (!err)
         {
             // register the voter's information
-            err = !DatabaseUtils.registerVoter(pub, fname, lname);
+            err = !DatabaseUtils.registerVoter(pub, fname, lname, election);
             if (err)
                 request.setAttribute("error", "The provided information is invalid!");
             else
