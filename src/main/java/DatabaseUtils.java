@@ -109,7 +109,7 @@ public class DatabaseUtils
     	List<String> list = new LinkedList<String>();
     	if (connection == null) return list;
     	try{
-    		st	= "SELECT * FROM elections";
+    		st	= "SELECT * FROM elections WHERE active LIKE 'Y'";
     		res = connection.prepareStatement(st).executeQuery();
     		while(res.next()){
     			String election = res.getString("election_name") + " | " + res.getString("block_count") + 
@@ -124,6 +124,52 @@ public class DatabaseUtils
     		e.printStackTrace();
     		return list;
     	}
+    }
+
+    public static List<String> getUpcomingElections()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
+        try{
+            st	= "SELECT * FROM elections WHERE active LIKE 'U'";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next()){
+                String election = res.getString("election_name") + " | " + res.getString("block_count") +
+                        "\n" + res.getString("public_key");
+                list.add(election);
+            }
+            Collections.sort(list);
+            return list;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
+    }
+
+    public static List<String> getClosedElections()
+    {
+        String st; ResultSet res;
+        List<String> list = new LinkedList<String>();
+        if (connection == null) return list;
+        try{
+            st	= "SELECT * FROM elections WHERE active LIKE 'N'";
+            res = connection.prepareStatement(st).executeQuery();
+            while(res.next()){
+                String election = res.getString("election_name") + " | " + res.getString("block_count") +
+                        "\n" + res.getString("public_key");
+                list.add(election);
+            }
+            Collections.sort(list);
+            return list;
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+            return list;
+        }
     }
     
     /**
@@ -226,8 +272,9 @@ public class DatabaseUtils
             rst = "CREATE TABLE IF NOT EXISTS elections (" +
                     "public_key VARCHAR(8192) PRIMARY KEY," + // public key -> urlbase64 encoded
                     "block_count BIGINT NOT NULL," +     	// next block number
-                    "election_name VARCHAR(128)" +			// readable identifier, TODO unique?
-                    // other useful information to keep handy?
+                    "election_name VARCHAR(128)," +			// readable identifier, TODO unique?
+                    "active CHAR(1)" +                      // Active Flag to identify if election is active.
+                                                            // other useful information to keep handy?
                     ");";
             connection.prepareStatement(rst).executeUpdate();
             
@@ -250,7 +297,7 @@ public class DatabaseUtils
             System.out.println("Election: " + electionName + "\nPK: " + pk);
             
             // store record for the Elections table
-            rst = "INSERT INTO elections VALUES (?, ?, ?)";
+            rst = "INSERT INTO elections VALUES (?, ?, ?, 'U')";
             pst = connection.prepareStatement(rst);
             pst.setString(1, pk);
             pst.setInt(2, 0);
@@ -260,7 +307,7 @@ public class DatabaseUtils
             // store record for the PrivateKeys table
             rst = "INSERT INTO private_keys VALUES (?, ?)";
             pst = connection.prepareStatement(rst);
-            pst.setString(1, pk.substring(0, 32));
+            pst.setString(1, pk);
             pst.setString(2, sk);
             pst.executeUpdate();
             
