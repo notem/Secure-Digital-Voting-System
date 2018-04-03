@@ -88,13 +88,13 @@ public class DatabaseUtils
         if (connection == null || electionName == null) return list;
         try
         {
-            st  = "SELECT (fname, lname) FROM voters WHERE election_name=?;";
+            st  = "SELECT fname, lname FROM voters WHERE election_name=?;";
             pst = connection.prepareStatement(st);
             pst.setString(1, electionName);
             res = pst.executeQuery();
             while(res.next())
             {
-                String name = res.getString("fname") + " " + res.getString("lname");
+                String name = res.getString(1) + " " + res.getString(2);
                 list.add(name);
             }
             Collections.sort(list);
@@ -298,12 +298,12 @@ public class DatabaseUtils
             relName = deriveBlockchainName(publicKey);
             
             // read block number and status from elections
-            rst = "SELECT block_no, active FROM elections WHERE public_key=?";
+            rst = "SELECT block_count, active FROM elections WHERE public_key=?";
             pst = connection.prepareStatement(rst);
             pst.setString(1, publicKey);
             res = pst.executeQuery();
             if(res.next() && res.getString("active").equals("Y"))
-                blockCount = res.getInt("block_no");
+                blockCount = res.getInt("block_count");
             else
                 return false;
 

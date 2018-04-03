@@ -36,10 +36,6 @@ public class ElectionManager extends HttpServlet {
 		List<String> closedNames = DatabaseUtils.getClosedNames();
 		req.setAttribute("closedElections", closedElections);
 		req.setAttribute("closedNames", closedNames);
-
-		// for each election, a list of voters
-		List<String> voters = DatabaseUtils.getVoters(null);
-		req.setAttribute("voters", voters);
 		
 		// management utilities: view blockchain, close election
 		
@@ -55,27 +51,35 @@ public class ElectionManager extends HttpServlet {
         List<String> activeElections = DatabaseUtils.getActiveNames();
 
         String button = request.getParameter("buttonPressed");
-        String election = button.substring(9);
-        String publicKey = DatabaseUtils.retrievePublicKey(election);
-        if(upcomingElections.contains(election)) {
-            Boolean startElection = DatabaseUtils.initializeElectionBlockchain(publicKey);
-            if (startElection) {
-                System.out.println("Election Started");
-            } else {
-                System.out.println("Election Could Not Be Started");
+        if(button.charAt(0) == 'A') {
+            String election = button.substring(9);
+            String publicKey = DatabaseUtils.retrievePublicKey(election);
+            if (upcomingElections.contains(election)) {
+                Boolean startElection = DatabaseUtils.initializeElectionBlockchain(publicKey);
+                if (startElection) {
+                    System.out.println("Election Started");
+                } else {
+                    System.out.println("Election Could Not Be Started");
+                }
             }
         }
-        else if(activeElections.contains(election)) {
-            Boolean closeElection = false;
-            if(closeElection) {
-                System.out.println("Election Closed");
-            }
-            else {
-                System.out.println("Election could not be closed");
+        else if(button.charAt(0) == 'T') {
+            String election = button.substring(10);
+            String publicKey = DatabaseUtils.retrievePublicKey(election);
+            if (activeElections.contains(election)) {
+                Boolean closeElection = DatabaseUtils.terminateElectionBlockchain(publicKey);
+                if (closeElection) {
+                    System.out.println("Election Closed");
+                } else {
+                    System.out.println("Election could not be closed");
+                }
             }
         }
-        else {
-            System.out.println("Election does not exist as an upcoming or active election, could not take action.");
+        else if(button.charAt(0) == 'V') {
+            String election = button.substring(12);
+            System.out.println(election);
+            List<String> voters = DatabaseUtils.getVoters(election);
+            request.setAttribute("voters", voters);
         }
 
         /* refresh the page */
