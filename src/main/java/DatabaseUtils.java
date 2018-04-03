@@ -2,6 +2,10 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.sql.*;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Date;
 
@@ -546,26 +550,54 @@ public class DatabaseUtils
      * @param electionKey Public key to identify an election
      * @return List of blocks, each represented as cells in an HTML table row
      */
-    public static List<String> viewBlockchain(String electionKey)
+    public static List<ElectionBlock> viewBlockchain(String electionKey)
     {
-    	if (connection == null) return null;
-    	String rst; ResultSet res; String relName;
-    	List<String> list = new LinkedList<String>();
+    	String rst, relName; ResultSet res; PreparedStatement pst;
+    	List<ElectionBlock> list = new LinkedList<ElectionBlock>();
+        if (connection == null) return list;
     	try
     	{
-    		relName = deriveBlockchainName(electionKey);
+            // query the elections table to learn the election's last block number and active status
+            rst = "SELECT block_count, active FROM elections WHERE public_key=?;";
+            pst = connection.prepareStatement(rst);
+            pst.setString(1, electionKey);
+            res = pst.executeQuery();
 
-    		rst = "SELECT (_id,block_no,block_content,timestamp,current_hash) FROM "+relName+" ORDER BY block_no ASC;";
-    		res = connection.prepareStatement(rst).executeQuery();
-    		while(res.next())
+            if (res.next())
             {
-    			String block = "" +
-                        "<td>"+ res.getInt("block_no") + "</td>" +
-                        "<td>"+ Date.from(Instant.ofEpochMilli(res.getLong("timestamp"))) + "</td>" +
-                        "<td>"+ res.getString("block_content") + "</td>" +
-    					"<td>"+ res.getString("current_hash") + "</td>";
-    			list.add(block);
-    		}
+                Integer lastBlock = res.getInt(1); // terminating block no
+                PrivateKey decryptionKey = null; // used to decrypt the ballot for user display
+                boolean active = !res.getString(2).equalsIgnoreCase("n");
+                if (!active)
+                {   // get the election's decryption key if election is not active
+                    decryptionKey = CryptoUtils.importPrivateKey(retrievePrivateKey(electionKey));
+                }
+
+                // query for list of all blocks
+                relName = deriveBlockchainName(electionKey);
+                rst = "SELECT _id,block_no,block_content,timestamp,current_hash FROM "+relName+" ORDER BY block_no ASC;";
+                res = connection.prepareStatement(rst).executeQuery();
+                while(res.next())
+                {   // create election block object for JSTL usage in viewBlockchain.jsp
+                    ElectionBlock block = new ElectionBlock(
+                                                res.getInt(2),
+                                                res.getLong(4),
+                                                res.getString(3),
+                                                res.getString(5));
+                    if (!active && block.no > 0 && block.no < lastBlock)
+                    {   // create decrypted ballot if election is not active and is valid block number
+                        try
+                        {
+                            block.ballot = new BallotServlet.DecryptedBallot(block.content, decryptionKey);
+                        }
+                        catch (IllegalArgumentException e)
+                        {   // print error and do not add the ballot
+                            e.printStackTrace();
+                        }
+                    }
+                    list.add(block);
+                }
+            }
     		return list;
     	}
     	catch(Exception e)
@@ -573,6 +605,49 @@ public class DatabaseUtils
     		e.printStackTrace();
     		return null;
     	}
+    }
+
+    /**
+     * simple bean-like class hold information for easy display on viewBlockchain.jsp
+     */
+    public static class ElectionBlock
+    {
+        public Integer no;          // block num
+        public Long epoch;          // unix epoch timestamp (milli)
+        public String content;      // block contents (election pub key, or ballot, or election priv key)
+        public String hash;         // hash of current block||previous hash
+        public BallotServlet.DecryptedBallot ballot;    // parsed ballot (may be null)
+        public ElectionBlock(Integer no, Long time, String content, String hash)
+        {
+            this.no = no;
+            this.epoch = time;
+            this.content = content;
+            this.hash = hash;
+            this.ballot = null;
+        }
+
+        public String getTime()
+        {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("uuuu-MMM-dd H:m:s"));
+        }
+        public String getNo()
+        {
+            return no+"";
+        }
+
+        public String getContent()
+        {
+            return content;
+        }
+        public String getHash()
+        {
+            return hash;
+        }
+        public BallotServlet.DecryptedBallot getBallot()
+        {
+            return ballot;
+        }
     }
     
     /**
@@ -610,7 +685,7 @@ public class DatabaseUtils
     	try
     	{
     	    // query the elections table to learn the election's last block number and active status
-    	    rst = "SELECT (block_count, active) FROM elections WHERE public_key=?;";
+    	    rst = "SELECT block_count, active FROM elections WHERE public_key=?;";
     	    pst = connection.prepareStatement(rst);
     	    pst.setString(1, electionKey);
     	    res = pst.executeQuery();
@@ -625,7 +700,7 @@ public class DatabaseUtils
 
     	        // query for all blocks in the block chain, sorted in descending order
                 relName = deriveBlockchainName(electionKey);
-                rst = "SELECT (block_no, block_content) FROM " + relName + " ORDER BY block_no DESC;";
+                rst = "SELECT block_no, block_content FROM " + relName + " ORDER BY block_no DESC;";
                 res = connection.prepareStatement(rst).executeQuery();
 
                 /* for each block */

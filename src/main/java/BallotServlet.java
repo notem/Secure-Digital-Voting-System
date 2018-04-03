@@ -11,6 +11,7 @@ import java.security.PublicKey;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 import static java.lang.Math.abs;
 
@@ -193,6 +194,16 @@ public class BallotServlet extends HttpServlet
             {
                 throw new IllegalArgumentException("Ballot has an invalid signature!");
             }
+        }
+
+        public String getModulus()
+        {
+            return modulus;
+        }
+
+        public String getCandidate()
+        {
+            return candidate;
         }
 
         @Override

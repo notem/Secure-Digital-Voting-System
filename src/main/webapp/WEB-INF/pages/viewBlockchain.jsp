@@ -47,14 +47,45 @@
 
     <%-- table to display blockchain --%>
     <p>In a real-world application of this system, the voter's client application should be capable of decrypt the
-        block-chain and verify the election results. Unfortunately, our proof-of-concept does not support this.</p>
+        block-chain and verify the election results. Unfortunately, our proof-of-concept does not support this.
+        Instead, this prototype automatically returns and displays the decrypted ballots when possible.</p>
     <table border="0" class="table table-responsive">
         <tr>
             <th>#</th><th>Timestamp</th><th>Block</th><th>Hash</th>
         </tr>
-        <c:forEach var="block" items="${blockchain}">
+        <c:forEach var="block" items="${blocks}">
             <tr>
-                <c:out value="${block}" />
+                <td><c:out value="${block.no}" /></td>
+                <td><c:out value="${block.time}" /></td>
+                <%-- if block object has a ballot, show the ballot contents (human readable) --%>
+                <c:choose>
+                    <c:when test="${block.getBallot() != null}">
+                        <c:set var="ballot" value="${block.getBallot()}" />
+                        <td>
+                            <table border="0" class="table table-responsive">
+                                <tr>
+                                    <td><c:out value="${ballot.modulus}" /></td>
+                                </tr>
+                                <tr>
+                                    <td><c:out value="${ballot.candidate}" /></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </c:when>
+                    <%-- otherwise, just show raw contents --%>
+                    <c:otherwise>
+                        <td>
+                            <div style="max-width: 300px; overflow: auto">
+                                <c:out value="${block.content}" />
+                            </div>
+                        </td>
+                    </c:otherwise>
+                </c:choose>
+                <td>
+                    <div style="max-width: 300px; overflow: auto">
+                        <c:out value="${block.hash}" />
+                    </div>
+                </td>
             </tr>
         </c:forEach>
     </table>
