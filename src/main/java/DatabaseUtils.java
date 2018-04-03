@@ -326,11 +326,9 @@ public class DatabaseUtils
             pst.executeUpdate();
 
             // update block number in the elections table
-            rst = "UPDATE elections SET block_count=?, active=? WHERE public_key=?;";
+            rst = "UPDATE elections SET block_count=1, active='Y' WHERE public_key=?;";
             pst = connection.prepareStatement(rst);
-            pst.setInt(1, 1);
-            pst.setString(2, "Y");
-            pst.setString(3, publicKey);
+            pst.setString(1, publicKey);
 
             return 1 == pst.executeUpdate(); // return true if the entry was created
         }
@@ -384,11 +382,10 @@ public class DatabaseUtils
             System.out.println("Election: " + electionName + "\nPK: " + pk);
             
             // store record for the Elections table
-            rst = "INSERT INTO elections VALUES (?, ?, ?, 'U')";
+            rst = "INSERT INTO elections VALUES (?, 0, ?, 'U')";
             pst = connection.prepareStatement(rst);
             pst.setString(1, pk);
-            pst.setInt(2, 0);
-            pst.setString(3, electionName);
+            pst.setString(2, electionName);
             pst.executeUpdate();
             
             // store record for the PrivateKeys table
@@ -488,15 +485,23 @@ public class DatabaseUtils
     		
     		// derive blockchain relation name from public modulus
     		String relName = deriveBlockchainName(electionKey);
-    		System.out.println("Hi hello the relName is " + relName);
+//    		System.out.println("Hi hello the relName is " + relName);
     		
-    		// determine next block number
+    		// read block number and status from elections
+    		rst = "SELECT block_no, active FROM elections WHERE public_key=?";
+    		pst = connection.prepareStatement(rst);
+    		pst.setString(1, electionKey);
+    		res = pst.executeQuery();
+    		if(res.next() && res.getString("active").equals("Y"))
+    			blockCount = res.getInt("block_no");
+    		else
+    			return false;
+    		
+    		// verify next block number from election blockchain
     		rst = "SELECT COUNT(_id) AS count FROM "+relName;
     		pst = connection.prepareStatement(rst);
     		res = pst.executeQuery();
-    		if(res.next())
-    			blockCount = res.getInt("count");
-    		else
+    		if(!res.next() || res.getInt("count") != blockCount)
     			return false;
 
 //    		// for testing purposes
@@ -583,10 +588,10 @@ public class DatabaseUtils
     public static boolean terminateBlockChain(String publicKey)
     {
     	if (connection == null) return false;
-    	
+    	String rst; PreparedStatement pst; ResultSet res;
     	try
     	{
-    		//TODO
+    		// read block
     		return true;
     	}
     	catch(Exception e){
@@ -618,7 +623,7 @@ public class DatabaseUtils
     	    // if the query was successful and the election is no longer active, generate the election results
     	    if (res.next() && res.getString(2).equalsIgnoreCase("n"))
             {
-                int lastBlockNo = res.getInt(1); // last block number (terminating block)
+                int lastBlockNo = res.getInt(1) - 1; // last block number (terminus block)
 
     	        // get the election's decryption key
                 PrivateKey decryptionKey = CryptoUtils.importPrivateKey(retrievePrivateKey(electionKey));
@@ -633,7 +638,7 @@ public class DatabaseUtils
                 {
                     Integer blockNo   = res.getInt(1);
                     String block = res.getString(2);
-                    if (blockNo < lastBlockNo && blockNo > 0) // ignore the genesis and terminating block
+                    if (blockNo < lastBlockNo && blockNo > 0) // ignore the genesis and terminus block
                     {
                         try // attempt to decrypt the ballot and increment the candidate count
                         {
