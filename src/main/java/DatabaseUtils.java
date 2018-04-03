@@ -281,6 +281,76 @@ public class DatabaseUtils
     	String modulus = CryptoUtils.exportPublicModulus(publicKey);
     	return modulus.substring(0, 63).replaceAll("[+/]", "_");
     }
+
+
+    /**
+     * Add the terminating block on the blockchain and close the election.
+     *
+     * @param publicKey
+     * @return success - boolean that if true, blockchain has been terminated.
+     */
+    public static Boolean terminateElectionBlockchain(String publicKey) {
+        Boolean success = false;
+        if (connection == null) return false;
+        String rst; PreparedStatement pst; ResultSet res;
+        long time;
+        int blockCount;
+        try {
+            //derive blockchain relation name from public key's modulus
+            String relName = deriveBlockchainName(publicKey);
+
+            //Retrieve private key
+            String privateKey = retrievePrivateKey(publicKey);
+
+            // read block number and status from elections
+            rst = "SELECT block_no, active FROM elections WHERE public_key=?";
+            pst = connection.prepareStatement(rst);
+            pst.setString(1, publicKey);
+            res = pst.executeQuery();
+            if(res.next() && res.getString("active").equals("Y"))
+                blockCount = res.getInt("block_no");
+            else
+                return false;
+
+            // verify next block number from election blockchain
+            rst = "SELECT COUNT(_id) AS count FROM "+relName;
+            pst = connection.prepareStatement(rst);
+            res = pst.executeQuery();
+            if(!res.next() || res.getInt("count") != blockCount)
+                return false;
+
+            // insert the termination block into the table
+            rst = "INSERT INTO "+relName+" VALUES(?, ?, ?, ?, ?);";
+            pst = connection.prepareStatement(rst);
+            pst.setInt(1, (int)(Math.random()*10000));
+            pst.setInt(2, blockCount+1);
+            pst.setString(3, privateKey);
+            time = System.currentTimeMillis();
+            pst.setLong(4, time);
+            String timestamp = Base64.getEncoder().encodeToString(Long.toString(time).getBytes());
+            pst.setString(5, CryptoUtils.signData(publicKey+timestamp, CryptoUtils.importPrivateKey(privateKey)));
+            pst.executeUpdate();
+
+            // update block number in the elections table
+            rst = "UPDATE elections SET block_count=?, active='N' WHERE public_key=?;";
+            pst = connection.prepareStatement(rst);
+            pst.setInt(1, blockCount +1 );
+            pst.setString(2, publicKey);
+
+            if(pst.executeUpdate() == 1) {
+                success = true;
+                return success;
+            }
+            else {
+                return success;
+            }
+        }
+        catch (SQLException e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
     
     /**
      * creates a new table to hold an elections blockchain
@@ -577,26 +647,6 @@ public class DatabaseUtils
         {
     		e.printStackTrace();
     		return null;
-    	}
-    }
-    
-    /**
-     * Creates the terminus block for an election, releasing the private key.
-     * @param publicKey Public key to identify an election
-     * @return True if terminus block is successfully added
-     */
-    public static boolean terminateBlockChain(String publicKey)
-    {
-    	if (connection == null) return false;
-    	String rst; PreparedStatement pst; ResultSet res;
-    	try
-    	{
-    		// read block
-    		return true;
-    	}
-    	catch(Exception e){
-    		e.printStackTrace();
-    		return false;
     	}
     }
     
