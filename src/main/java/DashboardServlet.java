@@ -24,6 +24,11 @@ public class DashboardServlet extends HttpServlet
         List<String> upcomingElections = DatabaseUtils.getUpcomingElections();
         req.setAttribute("upcomingElections", upcomingElections);
         // management utilities: view blockchain, close election
+        List<String> activeElections = DatabaseUtils.getElections();
+        req.setAttribute("activeElections", activeElections);
+
+        List<String> closedElections = DatabaseUtils.getClosedElections();
+        req.setAttribute("closedElections", closedElections);
 
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/vDashboard.jsp");
         dispatcher.forward(req, resp);
