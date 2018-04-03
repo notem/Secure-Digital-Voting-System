@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.PublicKey;
+import java.util.List;
 
 @WebServlet(urlPatterns = { "/view"})
 public class ViewBlockchainServlet extends HttpServlet
@@ -39,7 +40,7 @@ public class ViewBlockchainServlet extends HttpServlet
         }
         else
         {
-            request.setAttribute("blockchain", DatabaseUtils.viewBlockchain(encodedKey));
+            request.setAttribute("blocks", DatabaseUtils.viewBlockchain(encodedKey));
             request.setAttribute("error", ""); // no error
         }
 
