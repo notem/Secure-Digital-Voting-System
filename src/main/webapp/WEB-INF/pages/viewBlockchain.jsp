@@ -24,7 +24,7 @@
         <% }
     } %>
 
-    <h3>View Election Block-chain</h3>
+    <h3>Query</h3>
     <p>Election block-chains are publicly viewable (but not writeable) so as to allow voters to verify their vote has
         been counted. You can use the form below to request to view an election's public block-chain.</p>
     <%-- form allows users to request to view election block-chain --%>
@@ -43,9 +43,29 @@
     </form>
 
     <br />
+
+
+    <%-- table to summarized results --%>
+    <c:if test="${results.size() > 0}">
+        <h4>Results Summary</h4>
+        <p>Below is a summary of the vote count seen in the block-chain.</p>
+        <table border="0" class="table">
+            <tr>
+                <th>Candidate</th><th>Count</th>
+            </tr>
+            <tr>
+                <c:forEach var="entry" items="${results}">
+                    <td>${entry.key}</td>
+                    <td>${entry.value}</td>
+                </c:forEach>
+            </tr>
+        </table>
+    </c:if>
+
     <br />
 
     <%-- table to display blockchain --%>
+    <h4>Election Block-chain</h4>
     <p>In a real-world application of this system, the voter's client application should be capable of decrypt the
         block-chain and verify the election results. Unfortunately, our proof-of-concept does not support this.
         Instead, this prototype automatically returns and displays the decrypted ballots when possible.</p>
@@ -67,7 +87,7 @@
                                 <tr>
                                     <td>Voter:</td>
                                     <td>
-                                        <div style="max-width: 350px; overflow: auto">
+                                        <div style="max-width: 250px; overflow: auto">
                                             <c:out value="${ballot.modulus}" />
                                         </div>
                                     </td>

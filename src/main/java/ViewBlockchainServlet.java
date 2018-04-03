@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(urlPatterns = { "/view"})
 public class ViewBlockchainServlet extends HttpServlet
@@ -41,6 +42,7 @@ public class ViewBlockchainServlet extends HttpServlet
         else
         {
             request.setAttribute("blocks", DatabaseUtils.viewBlockchain(encodedKey));
+            request.setAttribute("results", DatabaseUtils.evaluateBlockchain(encodedKey)); // an empty list if election is active
             request.setAttribute("error", ""); // no error
         }
 
