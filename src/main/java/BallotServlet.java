@@ -5,13 +5,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
 
 import static java.lang.Math.abs;
 
@@ -200,10 +201,14 @@ public class BallotServlet extends HttpServlet
         {
             return modulus;
         }
-
         public String getCandidate()
         {
             return candidate;
+        }
+        public String getTimestamp()
+        {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp*1000), ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("uuuu-MMM-dd H:mm:ss"));
         }
 
         @Override

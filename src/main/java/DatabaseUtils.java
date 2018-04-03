@@ -557,12 +557,12 @@ public class DatabaseUtils
 //    		System.out.println("Hi hello the relName is " + relName);
     		
     		// read block number and status from elections
-    		rst = "SELECT block_no, active FROM elections WHERE public_key=?";
+    		rst = "SELECT block_count, active FROM elections WHERE public_key=?";
     		pst = connection.prepareStatement(rst);
     		pst.setString(1, electionKey);
     		res = pst.executeQuery();
     		if(res.next() && res.getString("active").equals("Y"))
-    			blockCount = res.getInt("block_no");
+    			blockCount = res.getInt("block_count");
     		else
     			return false;
     		
@@ -699,7 +699,7 @@ public class DatabaseUtils
         public String getTime()
         {
             return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneId.systemDefault())
-                    .format(DateTimeFormatter.ofPattern("uuuu-MMM-dd H:m:s"));
+                    .format(DateTimeFormatter.ofPattern("uuuu-MMM-dd H:mm:ss"));
         }
         public String getNo()
         {

@@ -60,14 +60,25 @@
                 <%-- if block object has a ballot, show the ballot contents (human readable) --%>
                 <c:choose>
                     <c:when test="${block.getBallot() != null}">
+
                         <c:set var="ballot" value="${block.getBallot()}" />
                         <td>
-                            <table border="0" class="table table-responsive">
+                            <table border="0" class="table">
                                 <tr>
-                                    <td><c:out value="${ballot.modulus}" /></td>
+                                    <td>Voter:</td>
+                                    <td>
+                                        <div style="max-width: 350px; overflow: auto">
+                                            <c:out value="${ballot.modulus}" />
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr>
+                                    <td>Candidate:</td>
                                     <td><c:out value="${ballot.candidate}" /></td>
+                                </tr>
+                                <tr>
+                                    <td>Timestamp:</td>
+                                    <td><c:out value="${ballot.timestamp}" /></td>
                                 </tr>
                             </table>
                         </td>
@@ -75,14 +86,14 @@
                     <%-- otherwise, just show raw contents --%>
                     <c:otherwise>
                         <td>
-                            <div style="max-width: 300px; overflow: auto">
+                            <div style="max-width: 350px; overflow: auto">
                                 <c:out value="${block.content}" />
                             </div>
                         </td>
                     </c:otherwise>
                 </c:choose>
                 <td>
-                    <div style="max-width: 300px; overflow: auto">
+                    <div style="max-width: 350px; overflow: auto">
                         <c:out value="${block.hash}" />
                     </div>
                 </td>
