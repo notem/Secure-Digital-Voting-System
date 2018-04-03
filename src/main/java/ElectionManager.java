@@ -46,4 +46,39 @@ public class ElectionManager extends HttpServlet {
 		RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/electionManager.jsp");
 		dispatcher.forward(req, resp);
 	}
+
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException
+	{
+		List<String> upcomingElections = DatabaseUtils.getUpcomingNames();
+        List<String> activeElections = DatabaseUtils.getActiveNames();
+
+        String button = request.getParameter("buttonPressed");
+        String election = button.substring(9);
+        String publicKey = DatabaseUtils.retrievePublicKey(election);
+        if(upcomingElections.contains(election)) {
+            Boolean startElection = DatabaseUtils.initializeElectionBlockchain(publicKey);
+            if (startElection) {
+                System.out.println("Election Started");
+            } else {
+                System.out.println("Election Could Not Be Started");
+            }
+        }
+        else if(activeElections.contains(election)) {
+            Boolean closeElection = false;
+            if(closeElection) {
+                System.out.println("Election Closed");
+            }
+            else {
+                System.out.println("Election could not be closed");
+            }
+        }
+        else {
+            System.out.println("Election does not exist as an upcoming or active election, could not take action.");
+        }
+
+        /* refresh the page */
+		doGet(request, response);
+	}
 }

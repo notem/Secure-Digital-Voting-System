@@ -12,24 +12,30 @@
 
 <jsp:include page="_menu.jsp"></jsp:include>
 
+
 <div class="container">
+    <h1>Election Manager Dashboard</h1>
+    <h3>The Election Manager Dashboard is where you can see the status of elections, and also start and close elections.</h3>
+    <div></div>
 	<h3>Upcoming Elections</h3>
-	<ul>
-		<c:forEach var="upcomingElection" items="${upcomingElections}" varStatus="loop">
-			<c:set var="index" value="${loop.index}"/>
-			<li>
-				<h4><c:out value="${upcomingElection}" /></h4>
-				<ul>
-					<c:forEach var="voter" items="${voters}">
-						<li>
-							<c:out value="${voter}" />
-						</li>
-					</c:forEach>
-				</ul>
-			</li>
-			<button type="button" value="${upcomingNames[index]}">Make Active</button>
-		</c:forEach>
-	</ul>
+	<form method="POST" action="${pageContext.request.contextPath}/electionmanager">
+		<ul>
+			<c:forEach var="upcomingElection" items="${upcomingElections}" varStatus="loop">
+				<c:set var="index" value="${loop.index}"/>
+				<li>
+					<h4><c:out value="${upcomingElection}" /></h4>
+					<ul>
+						<c:forEach var="voter" items="${voters}">
+							<li>
+								<c:out value="${voter}" />
+							</li>
+						</c:forEach>
+					</ul>
+				</li>
+				<input type="submit" name="buttonPressed" value="Activate ${upcomingNames[index]}" />
+			</c:forEach>
+		</ul>
+	</form>
 
     <h3>Active Elections</h3>
     <ul>
@@ -45,7 +51,7 @@
 			    	</c:forEach>
 			    </ul>
 			</li>
-			<button type="button" value="${activeNames[index]}">End Election</button>
+			<button type="button" name="${activeNames[index]} value="${activeNames[index]}">End Election</button>
 		</c:forEach>
     </ul>
     
