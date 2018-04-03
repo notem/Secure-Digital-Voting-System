@@ -53,12 +53,12 @@
             <tr>
                 <th>Candidate</th><th>Count</th>
             </tr>
-            <tr>
-                <c:forEach var="entry" items="${results}">
+            <c:forEach var="entry" items="${results}">
+                <tr>
                     <td>${entry.key}</td>
                     <td>${entry.value}</td>
-                </c:forEach>
-            </tr>
+                </tr>
+            </c:forEach>
         </table>
     </c:if>
 
