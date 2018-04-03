@@ -2,10 +2,12 @@ import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
+
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.*;
 import java.security.interfaces.*;
+import java.util.Arrays;
 import java.util.Base64;
 
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -279,5 +281,25 @@ public class CryptoUtils
     		e.printStackTrace();
     		return null;
     	}
+    }
+    
+    /**
+     * Utility to concatenate two base 64 encoded strings.
+     * Terminating padding prevents String concatenation.
+     * Not reversible, but repeatable.
+     * @param s1 First base 64 string
+     * @param s2 Second base 64 string
+     * @return Valid base 64 string of concatenated data
+     */
+    public static String base64Concat(String s1, String s2)
+    {
+    	byte[] b1 = Base64.getDecoder().decode(s1);
+    	byte[] b2 = Base64.getDecoder().decode(s2);
+    	
+    	byte[] b = new byte[b1.length + b2.length];
+    	System.arraycopy(b1, 0, b, 0, b1.length);
+    	System.arraycopy(b2, 0, b, b1.length, b2.length);
+    	
+    	return Base64.getEncoder().encodeToString(b);
     }
 }

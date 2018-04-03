@@ -290,18 +290,13 @@ public class DatabaseUtils
      * @return success - boolean that if true, blockchain has been terminated.
      */
     public static Boolean terminateElectionBlockchain(String publicKey) {
-        Boolean success = false;
         if (connection == null) return false;
         String rst; PreparedStatement pst; ResultSet res;
-        long time;
-        int blockCount;
+        String relName; long time;int blockCount;
         try {
-            //derive blockchain relation name from public key's modulus
-            String relName = deriveBlockchainName(publicKey);
-
-            //Retrieve private key
-            String privateKey = retrievePrivateKey(publicKey);
-
+            // derive blockchain relation name from public key's modulus
+            relName = deriveBlockchainName(publicKey);
+            
             // read block number and status from elections
             rst = "SELECT block_no, active FROM elections WHERE public_key=?";
             pst = connection.prepareStatement(rst);
@@ -319,7 +314,10 @@ public class DatabaseUtils
             if(!res.next() || res.getInt("count") != blockCount)
                 return false;
 
-            // insert the termination block into the table
+            // retrieve private key
+            String privateKey = retrievePrivateKey(publicKey);
+            
+            // insert the terminus block into the table
             rst = "INSERT INTO "+relName+" VALUES(?, ?, ?, ?, ?);";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, (int)(Math.random()*10000));
@@ -328,22 +326,20 @@ public class DatabaseUtils
             time = System.currentTimeMillis();
             pst.setLong(4, time);
             String timestamp = Base64.getEncoder().encodeToString(Long.toString(time).getBytes());
-            pst.setString(5, CryptoUtils.signData(publicKey+timestamp, CryptoUtils.importPrivateKey(privateKey)));
+            pst.setString(5, CryptoUtils.signData(CryptoUtils.base64Concat(publicKey,timestamp), 
+            		CryptoUtils.importPrivateKey(privateKey)));
             pst.executeUpdate();
 
             // update block number in the elections table
             rst = "UPDATE elections SET block_count=?, active='N' WHERE public_key=?;";
             pst = connection.prepareStatement(rst);
-            pst.setInt(1, blockCount +1 );
+            pst.setInt(1, blockCount+1);
             pst.setString(2, publicKey);
 
             if(pst.executeUpdate() == 1) {
-                success = true;
-                return success;
+                return true;
             }
-            else {
-                return success;
-            }
+            return false;
         }
         catch (SQLException e)
         {
@@ -381,18 +377,17 @@ public class DatabaseUtils
 
             // retrieve private key for signing
             // TODO sign using administrative key rather than election?
-            String privateKey = retrievePrivateKey(publicKey);
+            PrivateKey privateKey = CryptoUtils.importPrivateKey(retrievePrivateKey(publicKey));
             
             // insert the genesis block into the table
-            rst = "INSERT INTO "+relName+" VALUES(?, ?, ?, ?, ?);";
+            rst = "INSERT INTO "+relName+" VALUES(?, 0, ?, ?, ?);";
             pst = connection.prepareStatement(rst);
             pst.setInt(1, (int)(Math.random()*10000));
-            pst.setInt(2, 0);
-            pst.setString(3, publicKey);
+            pst.setString(2, publicKey);
             time = System.currentTimeMillis();
-            pst.setLong(4, time);
+            pst.setLong(3, time);
             String timestamp = Base64.getEncoder().encodeToString(Long.toString(time).getBytes());
-            pst.setString(5, CryptoUtils.signData(publicKey+timestamp, CryptoUtils.importPrivateKey(privateKey)));
+            pst.setString(4, CryptoUtils.signData(CryptoUtils.base64Concat(publicKey,timestamp), privateKey));
             pst.executeUpdate();
 
             // update block number in the elections table
