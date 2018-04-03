@@ -5,8 +5,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
-@WebServlet(urlPatterns = { "/dashboard"})
+@WebServlet(urlPatterns = {"/dashboard"})
 public class DashboardServlet extends HttpServlet
 {
     public DashboardServlet()
@@ -15,20 +16,24 @@ public class DashboardServlet extends HttpServlet
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException
     {
-        request.setAttribute("dashboardActive", "");
+        req.setAttribute("dashboardActive", "true");
 
-        /* forward the request onto the jsp compiler */
+        List<String> upcomingElections = DatabaseUtils.getUpcomingElections();
+        req.setAttribute("upcomingElections", upcomingElections);
+        // management utilities: view blockchain, close election
+
         RequestDispatcher dispatcher = this.getServletContext().getRequestDispatcher("/WEB-INF/pages/vDashboard.jsp");
-        dispatcher.forward(request, response);
+        dispatcher.forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
+        //Refresh the page
         doGet(request, response);
     }
 }
