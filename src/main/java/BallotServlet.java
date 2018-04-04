@@ -70,7 +70,6 @@ public class BallotServlet extends HttpServlet
             try /* DecryptedBallot constructor will through illegal argument errors if ballot is invalid */
             {
                 ballot = new DecryptedBallot(data, decryptionKey);
-                System.out.println(ballot.toString());
             }
             catch (IllegalArgumentException e)
             {

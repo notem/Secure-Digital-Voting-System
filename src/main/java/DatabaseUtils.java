@@ -447,9 +447,6 @@ public class DatabaseUtils
             pk = CryptoUtils.exportKey(keys.getPublic());
             sk = CryptoUtils.exportKey(keys.getPrivate());
             
-            // debug output
-            System.out.println("Election: " + electionName + "\nPK: " + pk);
-            
             // store record for the Elections table
             rst = "INSERT INTO elections VALUES (?, 0, ?, 'U')";
             pst = connection.prepareStatement(rst);
@@ -550,8 +547,6 @@ public class DatabaseUtils
     	int blockCount; String prevHash; long time;
     	try
     	{
-    		//TODO verify that the blockchain relation exists?
-    		
     		// derive blockchain relation name from public modulus
     		String relName = deriveBlockchainName(electionKey);
 //    		System.out.println("Hi hello the relName is " + relName);

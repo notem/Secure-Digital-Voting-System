@@ -24,15 +24,15 @@
         <% }
     } %>
 
-    <h3>Query</h3>
+    <h3>View an Election's Blockchain</h3>
     <p>Election block-chains are publicly viewable (but not writeable) so as to allow voters to verify their vote has
         been counted. You can use the form below to request to view an election's public block-chain.</p>
     <%-- form allows users to request to view election block-chain --%>
     <form method="POST" action="${pageContext.request.contextPath}/view">
         <table border="0" class="table">
             <tr>
-                <td>Election</td>
-                <td><input type="text" id="electionName" name="electionName" title="The name of the election you are registering for."/> </td>
+                <td>Election Name</td>
+                <td><input type="text" id="electionName" name="electionName" title="The name of the election to query for."/> </td>
             </tr>
             <tr>
                 <td colspan ="2">
@@ -68,7 +68,7 @@
     <h4>Election Block-chain</h4>
     <p>In a real-world application of this system, the voter's client application should be capable of decrypt the
         block-chain and verify the election results. Unfortunately, our proof-of-concept does not support this.
-        Instead, this prototype automatically returns and displays the decrypted ballots when possible.</p>
+        Instead, this prototype decrypts on the server-side and sends decrypted information to the client for display.</p>
     <table border="0" class="table table-responsive">
         <tr>
             <th>#</th><th>Timestamp</th><th>Block</th><th>Hash</th>

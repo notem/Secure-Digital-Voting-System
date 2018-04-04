@@ -110,7 +110,6 @@ public class CryptoUtils
     }
     
     /**
-     * @param pk an RSAPublicKey object or corresponding base64 String 
      * @return Base64 encoded public modulus for the key pair
      */
     public static String exportPublicModulus(String b64){

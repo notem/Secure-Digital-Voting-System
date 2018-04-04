@@ -22,7 +22,6 @@
     <h4 class="text-danger">Failure: ${error}</h4>
     <% }
     } %>
-    <br />
 
     <h3>Submit Ballot</h3>
     <p>In order to submit a ballot container your vote, the ballot must be generated (client-side).
@@ -76,7 +75,7 @@
 
     <h3>Import Public Election Key</h3>
     <p>The election's public key is used to encrypt your ballot and confidentiality while the election is ongoing.
-        The election key can be found on [wherever it is found].</p>
+        The election key can be found on the Voter Dashboard page.</p>
     <table border="0" style="table-layout:fixed;width:100%">
         <tr>
             <!-- imported election key goes here -->

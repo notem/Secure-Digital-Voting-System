@@ -10,14 +10,19 @@
 <jsp:include page="_menu.jsp"></jsp:include>
 
 <div class="container">
-    <h1>Voter Dashboard</h1>
-    <h3>This is where all of your election needs can be met. You can find election names, public keys, and see how many votes have been cast here.</h3>
-    <div></div>
+    <h3>Voter Dashboard</h3>
+    <p>This is where all of your election needs can be met. You can find election names, public keys, and see how many
+        votes have been cast here.</p>
+
+    <br />
+
     <h3>Upcoming Elections</h3>
     <ul>
         <c:forEach var="upcomingElection" items="${upcomingElections}">
             <li>
-                <h4><c:out value="${upcomingElection}" /></h4>
+                <div style="max-width:600px; overflow-wrap:break-word;">
+                    <h4><c:out value="${upcomingElection}" /></h4>
+                </div>
                 <ul>
                     <c:forEach var="voter" items="${voters}">
                         <li>
@@ -33,7 +38,9 @@
     <ul>
         <c:forEach var="activeElection" items="${activeElections}">
             <li>
-                <h4><c:out value="${activeElection}" /></h4>
+                <div style="max-width:600px; overflow-wrap:break-word;">
+                    <h4><c:out value="${activeElection}" /></h4>
+                </div>
                 <ul>
                     <c:forEach var="voter" items="${voters}">
                         <li>
@@ -50,7 +57,9 @@
     <ul>
         <c:forEach var="closedElection" items="${closedElections}">
             <li>
-                <h4><c:out value="${closedElection}" /></h4>
+                <div style="max-width:600px; overflow-wrap:break-word;">
+                    <h4><c:out value="${closedElection}" /></h4>
+                </div>
                 <ul>
                     <c:forEach var="voter" items="${voters}">
                         <li>
