@@ -79,6 +79,9 @@ public class ElectionManager extends HttpServlet {
             String election = button.substring(12);
             System.out.println(election);
             List<String> voters = DatabaseUtils.getVoters(election);
+            if (voters.size() == 0) {
+                voters.add("No Voters registered");
+            }
             request.setAttribute("voters", voters);
         }
 
